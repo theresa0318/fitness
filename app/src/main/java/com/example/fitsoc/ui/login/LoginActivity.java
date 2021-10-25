@@ -21,7 +21,6 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.lifecycle.Observer;
 import androidx.lifecycle.ViewModelProvider;
 
-import com.example.fitsoc.FrontPageActivity;
 import com.example.fitsoc.NavigationActivity;
 import com.example.fitsoc.R;
 import com.example.fitsoc.databinding.ActivityLoginBinding;
