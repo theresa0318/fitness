@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="utf-8"?>
+<navigation xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/mobile_navigation"
+    app:startDestination="@+id/nav_run">
+
+    <fragment
+        android:id="@+id/nav_run"
+        android:name="com.example.fitsoc.ui.run.RunFragment"
+        android:label="@string/menu_run"
+        tools:layout="@layout/fragment_run" />
+
+    <fragment
+        android:id="@+id/nav_community"
+        android:name="com.example.fitsoc.ui.community.CommunityFragment"
+        android:label="@string/menu_community"
+        tools:layout="@layout/fragment_community" />
+
+    <fragment
+        android:id="@+id/nav_calorie"
+        android:name="com.example.fitsoc.ui.calorie.CalorieCalculatorFragment"
+        android:label="@string/menu_calorie"
+        tools:layout="@layout/fragment_calorie_calculator" />
+
+    <fragment
+        android:id="@+id/nav_history"
+        android:name="com.example.fitsoc.ui.history.HistoryFragment"
+        android:label="@string/menu_history"
+        tools:layout="@layout/fragment_history" />
+
+    <fragment
+        android:id="@+id/nav_profile"
+        android:name="com.example.fitsoc.ui.profile.ProfileFragment"
+        android:label="@string/menu_profile"
+        tools:layout="@layout/fragment_profile" />
+
+    <fragment
+        android:id="@+id/nav_settings"
+        android:name="com.example.fitsoc.ui.settings.SettingsFragment"
+        android:label="@string/menu_settings"
+        tools:layout="@layout/fragment_settings" />
+
+</navigation>
