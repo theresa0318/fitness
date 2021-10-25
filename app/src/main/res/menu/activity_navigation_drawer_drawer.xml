@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    tools:showIn="navigation_view">
+
+    <group android:checkableBehavior="single">
+        <item
+            android:id="@+id/nav_run"
+            android:icon="@drawable/run_icon"
+            android:title="@string/menu_run" />
+        <item
+            android:id="@+id/nav_community"
+            android:icon="@drawable/community_icon"
+            android:title="@string/menu_community" />
+        <item
+            android:id="@+id/nav_calorie"
+            android:icon="@drawable/calculator_icon"
+            android:title="@string/menu_calorie" />
+        <item
+            android:id="@+id/nav_history"
+            android:icon="@drawable/file_icon"
+            android:title="@string/menu_history" />
+        <item
+            android:id="@+id/nav_profile"
+            android:icon="@drawable/profile_icon"
+            android:title="@string/menu_profile" />
+        <item
+            android:id="@+id/nav_settings"
+            android:icon="@drawable/setting_icon"
+            android:title="@string/menu_settings" />
+    </group>
+</menu>
