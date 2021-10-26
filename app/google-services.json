@@ -1,0 +1,39 @@
+{
+  "project_info": {
+    "project_number": "421561192091",
+    "project_id": "fitsoc-77a74",
+    "storage_bucket": "fitsoc-77a74.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:421561192091:android:0d29cb92f34a038dc1c03e",
+        "android_client_info": {
+          "package_name": "com.example.fitsoc"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "421561192091-59urime28rjlrcigcmem86n094a1aq2p.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBr8Wulb7P4W7ewYLwLTdf-GPUxvCw8QV4"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "421561192091-59urime28rjlrcigcmem86n094a1aq2p.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
