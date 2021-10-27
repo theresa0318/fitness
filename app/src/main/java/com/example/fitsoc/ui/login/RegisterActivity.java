@@ -1,6 +1,7 @@
 package  com.example.fitsoc.ui.login;
 
 import static android.content.ContentValues.TAG;
+import static android.view.View.*;
 
 import android.app.Activity;
 import android.content.Intent;
@@ -28,7 +29,7 @@ import androidx.lifecycle.ViewModelProvider;
 import com.example.fitsoc.NavigationActivity;
 import com.example.fitsoc.R;
 import com.example.fitsoc.databinding.ActivityRegisterBinding;
-import com.example.fitsoc.ui.login.data.model.LoggedInUser;
+import com.example.fitsoc.data.model.RegisteredUser;
 import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.Task;
 import com.google.firebase.auth.AuthResult;
@@ -37,11 +38,12 @@ import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 
-public class RegisterActivity extends AppCompatActivity{
+public class RegisterActivity extends AppCompatActivity implements OnClickListener{
     private LoginViewModel loginViewModel;
     private ActivityRegisterBinding bindingR;
     private FirebaseAuth mAuth;
-    EditText usernameLoginEditText, passwordLoginEditText;
+    private EditText usernameLoginEditText, passwordLoginEditText;
+
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -61,12 +63,17 @@ public class RegisterActivity extends AppCompatActivity{
         drawable_register_wechat.setBounds(0, 0, 100, 100);
         button_register_wechat.setCompoundDrawables(drawable_register_wechat, null, null, null);
 
+        //EditText usernameLoginEditText = (EditText) findViewById(R.id.username_register);
+        //EditText passwordLoginEditText = (EditText) findViewById(R.id.password_register);
+
         //
         loginViewModel = new ViewModelProvider(this, new LoginViewModelFactory())
                 .get(LoginViewModel.class);
 
-        final EditText usernameLoginEditText = bindingR.usernameRegister;
-        final EditText passwordLoginEditText = bindingR.passwordRegister;
+        usernameLoginEditText = bindingR.usernameRegister;
+        passwordLoginEditText = bindingR.passwordRegister;
+        //final EditText usernameLoginEditText = bindingR.usernameRegister;
+        //final EditText passwordLoginEditText = bindingR.passwordRegister;
         final Button registerEmailButton = bindingR.registerEmail;
         final ProgressBar loadingProgressBar = bindingR.loading;
 
@@ -92,7 +99,7 @@ public class RegisterActivity extends AppCompatActivity{
                 if (loginResult == null) {
                     return;
                 }
-                loadingProgressBar.setVisibility(View.GONE);
+                loadingProgressBar.setVisibility(GONE);
                 if (loginResult.getError() != null) {
                     showLoginFailed(loginResult.getError());
                 }
@@ -129,15 +136,20 @@ public class RegisterActivity extends AppCompatActivity{
 
             @Override
             public boolean onEditorAction(TextView v, int actionId, KeyEvent event) {
+                //Log.d(TAG, "click register button");
                 if (actionId == EditorInfo.IME_ACTION_DONE) {
-                    loginViewModel.login(usernameLoginEditText.getText().toString(),
-                            passwordLoginEditText.getText().toString());
+                    //loginViewModel.login(usernameLoginEditText.getText().toString(),
+                            //passwordLoginEditText.getText().toString());
+                    Log.d(TAG, "press enter");
                 }
                 return false;
             }
         });
 
-        registerEmailButton.setOnClickListener(new View.OnClickListener() {
+        button_register_email.setOnClickListener(this);
+        /*
+        registerEmailButton.setOnClickListener(
+                new View.OnClickListener() {
             @Override
             public void onClick(View v) {
 //                loadingProgressBar.setVisibility(View.VISIBLE);
@@ -146,9 +158,19 @@ public class RegisterActivity extends AppCompatActivity{
 //                //同login page, 也需要修改
 //                Intent intent = new Intent(RegisterActivity.this, NavigationActivity.class);
 //                startActivity(intent);
-                  register();
+                Log.d(TAG, "click register button");
+                register();
+                Log.d(TAG, "finish register");
             }
-        });
+        });*/
+    }
+
+    public void onClick(View v) {
+        switch (v.getId()) {
+            case R.id.register_email:
+                register();
+                break;
+        }
     }
 
     public void register(){
@@ -160,14 +182,14 @@ public class RegisterActivity extends AppCompatActivity{
                     public void onComplete(@NonNull Task<AuthResult> task) {
                         if (task.isSuccessful()) {
                             // Register success, display a message to the user, then redirect to login page.
-                            Log.d(TAG, "signInWithCustomToken:success");
+                            Log.d(TAG, "createUserWithEmail:success");
                             FirebaseUser user = mAuth.getCurrentUser();
                             FirebaseDatabase database = FirebaseDatabase.getInstance();
                             DatabaseReference myRef = database.getReference();
 
-                            LoggedInUser loggedInUser = new LoggedInUser(username, password);
-                            myRef.child("users").child(loggedInUser.getUserId()).setValue(loggedInUser);
-                            myRef.child("users").child(loggedInUser.getDisplayName()).setValue(loggedInUser);
+                            RegisteredUser newUser = new RegisteredUser(username, password);
+                            myRef.child("users").child(newUser.getUserId().replace(".",",")).setValue(newUser);
+                            //myRef.child("users").child(loggedInUser.getDisplayName()).setValue(loggedInUser);
 
                             Toast.makeText(RegisterActivity.this, "Congratulations! You have registered successfully.",
                                     Toast.LENGTH_SHORT).show();
@@ -175,8 +197,8 @@ public class RegisterActivity extends AppCompatActivity{
                             startActivity(intent);
                         } else {
                             // If register fails, display a message to the user.
-                            Log.w(TAG, "signInWithCustomToken:failure", task.getException());
-                            Toast.makeText(RegisterActivity.this, "Fail to register! Please try again.",
+                            Log.w(TAG, "createUserWithEmail:failure", task.getException());
+                            Toast.makeText(RegisterActivity.this, "Email already registered! Please try another one.",
                                     Toast.LENGTH_SHORT).show();
                         }
                     }
@@ -192,4 +214,5 @@ public class RegisterActivity extends AppCompatActivity{
     private void showLoginFailed(@StringRes Integer errorString) {
         Toast.makeText(getApplicationContext(), errorString, Toast.LENGTH_SHORT).show();
     }
+
 }
