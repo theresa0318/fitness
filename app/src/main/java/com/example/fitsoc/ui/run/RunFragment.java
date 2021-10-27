@@ -7,7 +7,10 @@ import android.Manifest;
 import android.annotation.SuppressLint;
 import android.content.pm.PackageManager;
 import android.graphics.Color;
+import android.hardware.Sensor;
+import android.hardware.SensorManager;
 import android.location.Location;
+import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
@@ -23,13 +26,31 @@ import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
-import androidx.core.app.ActivityCompat;
+import androidx.annotation.RequiresApi;
 import androidx.core.content.ContextCompat;
 import androidx.fragment.app.Fragment;
 import androidx.lifecycle.ViewModelProvider;
 
 import com.example.fitsoc.R;
 import com.example.fitsoc.databinding.FragmentRunBinding;
+import com.google.android.gms.auth.api.signin.GoogleSignIn;
+import com.google.android.gms.auth.api.signin.GoogleSignInAccount;
+import com.google.android.gms.common.api.GoogleApiClient;
+import com.google.android.gms.common.api.Scope;
+import com.google.android.gms.fitness.Fitness;
+import com.google.android.gms.fitness.FitnessActivities;
+import com.google.android.gms.fitness.FitnessOptions;
+import com.google.android.gms.fitness.data.DataSet;
+import com.google.android.gms.fitness.data.DataSource;
+import com.google.android.gms.fitness.data.DataType;
+import com.google.android.gms.fitness.data.Field;
+import com.google.android.gms.fitness.data.Session;
+import com.google.android.gms.fitness.data.Subscription;
+import com.google.android.gms.fitness.data.Value;
+import com.google.android.gms.fitness.request.DataSourcesRequest;
+import com.google.android.gms.fitness.request.OnDataPointListener;
+import com.google.android.gms.fitness.request.SensorRequest;
+import com.google.android.gms.fitness.request.SessionReadRequest;
 import com.google.android.gms.location.FusedLocationProviderClient;
 import com.google.android.gms.location.LocationCallback;
 import com.google.android.gms.location.LocationRequest;
@@ -54,10 +75,14 @@ import com.google.android.gms.tasks.Task;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.OptionalDouble;
+import java.util.concurrent.TimeUnit;
 
 public class RunFragment extends Fragment implements OnMapReadyCallback,
         GoogleMap.OnMyLocationButtonClickListener,
         GoogleMap.OnMyLocationClickListener {
+    private final String TAG = "Running";
+
     private GoogleMap map;
     private MapView mapView;
     private TextView timer;
@@ -76,10 +101,15 @@ public class RunFragment extends Fragment implements OnMapReadyCallback,
     private Polyline route;
 
     private final LatLng melbourne = new LatLng(-37.8136, 144.9631);
-    private static final int DEFAULT_ZOOM = 15;
+    private static final int DEFAULT_ZOOM = 18;
 
+    private long firstStartTime;
+    private long lastStopTime;
     private long startTime;
     private long totalTime;
+    private ArrayList<Long> distances;
+    private ArrayList<Long> speeds;
+
     private boolean isStartRunning;
     private FusedLocationProviderClient fusedLocationProviderClient;
     private LocationSettingsRequest.Builder builder;
@@ -88,20 +118,30 @@ public class RunFragment extends Fragment implements OnMapReadyCallback,
     private Location lastKnownLocation;
     private Location startLocation;
     private Location stopLocation;
+
+    private FitnessOptions fitnessOptions;
+    private GoogleSignInAccount account;
+    private Session session;
+
     private boolean firstRun;
     private boolean requestingLocationUpdates;
-    private boolean locationPermissionGranted;
+    private boolean locationPermissionGranted = false;
+    private boolean recognitionPermissionGranted = false;
 
     private final Handler timerHandler = new Handler();
 
+    @RequiresApi(api = Build.VERSION_CODES.N)
     @Override
     public void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         fusedLocationProviderClient = LocationServices.getFusedLocationProviderClient(requireActivity());
         locationList = new ArrayList<>();
+        distances = new ArrayList<>();
+        speeds = new ArrayList<>();
         firstRun = true;
         isStartRunning = false;
         if (!locationPermissionGranted) getLocationPermission();
+        if (!recognitionPermissionGranted) getRecognitionPermission();
         model = new ViewModelProvider(this).get(RunViewModel.class);
     }
 
@@ -151,12 +191,203 @@ public class RunFragment extends Fragment implements OnMapReadyCallback,
         mapView.onLowMemory();
     }
 
+    @RequiresApi(api = Build.VERSION_CODES.N)
+    private void setFitness() {
+        fitnessOptions = FitnessOptions
+                .builder()
+                .addDataType(DataType.TYPE_STEP_COUNT_DELTA, FitnessOptions.ACCESS_READ)
+                .addDataType(DataType.TYPE_STEP_COUNT_DELTA, FitnessOptions.ACCESS_WRITE)
+                .addDataType(DataType.TYPE_ACTIVITY_SEGMENT, FitnessOptions.ACCESS_READ)
+                .addDataType(DataType.TYPE_ACTIVITY_SEGMENT, FitnessOptions.ACCESS_WRITE)
+                .build();
+
+        account = GoogleSignIn.getAccountForExtension(requireContext(), fitnessOptions);
+
+        account.requestExtraScopes(Fitness.SCOPE_ACTIVITY_READ_WRITE);
+        if (!GoogleSignIn.hasPermissions(account, fitnessOptions)) {
+            Toast.makeText(requireActivity(), "Set Permissions!", Toast.LENGTH_SHORT).show();
+            GoogleSignIn.requestPermissions(
+                    requireActivity(), // your activity
+                    1, // e.g. 1
+                    account,
+                    fitnessOptions);
+        } else {
+            Log.i(TAG, "Already has permissions");
+        }
+
+
+        // TODO TYPE_CALORIES_EXPENDED is not working
+        // TODO TYPE_STEP_COUNT_CADENCE is not working
+        Fitness.getSensorsClient(requireActivity(), account)
+                .findDataSources(
+                        new DataSourcesRequest.Builder()
+                                .setDataTypes(
+                                        DataType.TYPE_SPEED,
+                                        DataType.TYPE_DISTANCE_DELTA)
+                                .setDataSourceTypes(DataSource.TYPE_DERIVED)
+                                .build())
+                .addOnSuccessListener(dataSources -> {
+                    Log.d(TAG, String.valueOf(dataSources.size()));
+                    dataSources.forEach(dataSource -> {
+                        setFitListener(dataSource, dataSource.getDataType());
+                        //  TODO do something here?
+                        Log.i(TAG, "Data source found: " + dataSource.getDataType());
+                        Log.i(TAG, "Data Source type: " + dataSource.getDataType().getName());
+                    });})
+                .addOnFailureListener(e ->
+                        Log.e(TAG, "Find data sources request failed", e));
+
+//        Fitness.getRecordingClient(requireContext(), GoogleSignIn.getAccountForExtension(requireContext(), fitnessOptions))
+//                // This example shows subscribing to a DataType, across all possible
+//                // data sources. Alternatively, a specific DataSource can be used.
+//                .subscribe(DataType.TYPE_STEP_COUNT_DELTA)
+//                .addOnSuccessListener(unused ->
+//                        Log.i(TAG, "TYPE_STEP_COUNT_DELTA successfully subscribed!"))
+//                .addOnFailureListener( e ->
+//                        Log.w(TAG, "There was a problem TYPE_STEP_COUNT_DELTA subscribing.", e));
+
+//        Fitness.getRecordingClient(requireContext(), GoogleSignIn.getAccountForExtension(requireContext(), fitnessOptions))
+//                // This example shows subscribing to a DataType, across all possible
+//                // data sources. Alternatively, a specific DataSource can be used.
+//                .subscribe(DataType.AGGREGATE_STEP_COUNT_DELTA)
+//                .addOnSuccessListener(unused ->
+//                        Log.i(TAG, "AGGREGATE_STEP_COUNT_DELTA successfully subscribed!"))
+//                .addOnFailureListener( e ->
+//                        Log.w(TAG, "There was a problem AGGREGATE_STEP_COUNT_DELTA subscribing.", e));
+
+//        session = new Session.Builder()
+//                .setName("Running Data")
+//                .setIdentifier("session 1")
+//                .setDescription("Morning run")
+//                .setActivity(FitnessActivities.RUNNING)
+//                .setStartTime(System.currentTimeMillis(), TimeUnit.MILLISECONDS)
+//                .build();
+
+
+//        Fitness.getRecordingClient(requireContext(), GoogleSignIn.getAccountForExtension(requireContext(), fitnessOptions))
+//                .listSubscriptions()
+//                .addOnSuccessListener(subscriptions -> {
+//                    for (Subscription sc : subscriptions) {
+//                        DataType dt = sc.getDataType();
+//                        Log.i(TAG, "Active subscription for data type: " + dt.toString());
+//                    }
+//                });
+    }
+
+    private void setFitListener(DataSource dataSource, DataType dataType) {
+        Fitness.getSensorsClient(requireContext(),
+                GoogleSignIn.getAccountForExtension(requireContext(), fitnessOptions))
+                .add(new SensorRequest.Builder()
+                    .setDataSource(dataSource) // Optional but recommended
+                    // for custom data sets.
+                    .setDataType(dataType) // Can't be omitted.
+                    .setSamplingRate(5, TimeUnit.SECONDS)
+                    .build(),
+                fitListener)
+                .addOnSuccessListener(unused ->
+                        Log.i(TAG, "Listener registered!"))
+                .addOnFailureListener(task ->
+                        Log.e(TAG, "Listener not registered.", task.getCause()));
+    }
+
+    private void removeFitListener() {
+        Fitness.getSensorsClient(requireContext(),
+                GoogleSignIn.getAccountForExtension(requireContext(), fitnessOptions))
+                .remove(fitListener)
+                .addOnSuccessListener(unused ->
+                        Log.i(TAG, "Listener was removed!"))
+                .addOnFailureListener(e ->
+                        Log.i(TAG, "Listener was not removed."));
+    }
+
+
+    private final OnDataPointListener fitListener = dataPoint -> {
+        for (Field field : dataPoint.getDataType().getFields()) {
+            Value value = dataPoint.getValue(field);
+            String runningInfo = field.getName();
+            if (runningInfo.equals("distance")) {
+                distances.add((long) value.asFloat());
+            } else if (runningInfo.equals("speed")) {
+                speeds.add((long) value.asFloat());
+            } else {
+                // TODO get other data here
+                Log.i(TAG, "Other Data");
+            }
+            Log.i(TAG, "Detected DataPoint field: " + field.getName());
+            Log.i(TAG, "Detected DataPoint value: " + value);
+        }
+    };
+
+    private void startSession() {
+        Fitness.getSessionsClient(requireContext(), account)
+                .startSession(session)
+                .addOnSuccessListener(unused ->
+                        Log.i(TAG, "Session started successfully!"))
+                .addOnFailureListener(e ->
+                        Log.w(TAG, "There was an error starting the session", e));
+    }
+
+    private void stopSession(boolean isfinished) {
+        Fitness.getRecordingClient(requireContext(), GoogleSignIn.getAccountForExtension(requireContext(), fitnessOptions))
+                .unsubscribe(DataType.TYPE_STEP_COUNT_DELTA)
+                .addOnSuccessListener(unused -> {
+                            Log.i(TAG,"Successfully unsubscribed.");
+                            if (isfinished) {
+                                getSessionResult();
+                            }
+                        }
+                        )
+                .addOnFailureListener(e -> {
+                    Log.w(TAG, "Failed to unsubscribe.");
+                    // Retry the unsubscribe request.
+                });
+//        Fitness.getRecordingClient(requireContext(), GoogleSignIn.getAccountForExtension(requireContext(), fitnessOptions))
+//                .unsubscribe(DataType.AGGREGATE_STEP_COUNT_DELTA)
+//                .addOnSuccessListener(unused ->
+//                        Log.i(TAG,"Successfully unsubscribed."))
+//                .addOnFailureListener(e -> {
+//                    Log.w(TAG, "Failed to unsubscribe.");
+//                    // Retry the unsubscribe request.
+//                });
+    }
+
+    private void getSessionResult() {
+        SessionReadRequest readRequest = new SessionReadRequest.Builder()
+                .setTimeInterval(firstStartTime, lastStopTime, TimeUnit.SECONDS)
+                .read(DataType.TYPE_STEP_COUNT_DELTA)
+                .setSessionName("Running Session")
+                .build();
+
+        Fitness.getSessionsClient(requireContext(), GoogleSignIn.getAccountForExtension(requireContext(), fitnessOptions))
+                .readSession(readRequest)
+                .addOnSuccessListener(response -> {
+                    // Get a list of the sessions that match the criteria to check the
+                    // result.
+                    List<Session> sessions = response.getSessions();
+                    Log.i(TAG, "Number of returned sessions is:" + sessions.size());
+                    for (Session session : sessions) {
+                        // Process the session
+//                        dumpSession(session);
+
+                        // Process the data sets for this session
+                        List<DataSet> dataSets = response.getDataSet(session);
+                        for (DataSet dataSet : dataSets) {
+                            Log.d(TAG, dataSet.toString());
+                        }
+                    }
+                })
+                .addOnFailureListener(e ->
+                        Log.w(TAG,"Failed to read session", e));
+    }
+
     //  Start Running
     private void runningStart() {
         createLocationRequest();
         getLocation(true);
         firstRun = false;
         totalTime = 0;
+        firstStartTime = System.currentTimeMillis();
+        setFitness();
         runningContinue();
         // TODO initiate user data here?
     }
@@ -182,6 +413,7 @@ public class RunFragment extends Fragment implements OnMapReadyCallback,
                         map.addMarker(startOptions);
                         routeOptions = new PolylineOptions().width(15).color(Color.parseColor("#61BF99"));
                         startLocationUpdates();
+//                        startSession();
                     }
                 });
     }
@@ -204,15 +436,27 @@ public class RunFragment extends Fragment implements OnMapReadyCallback,
                                 .title("End Point");
                         map.addMarker(endOptions);
                         stopLocationUpdates();
+//                        stopSession(false);
                     }
                 });
     }
 
     //  Stop Running
+    @SuppressLint({"MissingPermission"})
     private void runningStop() {
         getLocation(false);
+        lastStopTime = System.currentTimeMillis();
         runningPause();
+        showResult();
+        removeFitListener();
         // TODO store data here...
+    }
+
+    private void showResult() {
+        long totalDistance = distances.stream().mapToLong(distance -> distance).sum();
+        Toast.makeText(requireContext(), "Distance: " + String.valueOf(totalDistance), Toast.LENGTH_SHORT).show();
+        OptionalDouble avgSpeed = speeds.stream().mapToLong(speed -> speed).average();
+        Toast.makeText(requireContext(), "Speed: " + String.valueOf(avgSpeed.getAsDouble()), Toast.LENGTH_SHORT).show();
     }
 
     private void setBtnListeners() {
@@ -233,6 +477,34 @@ public class RunFragment extends Fragment implements OnMapReadyCallback,
             if (isStartRunning) runningStop();
         });
     }
+
+    @RequiresApi(api = Build.VERSION_CODES.Q)
+    private void getRecognitionPermission() {
+        if (ContextCompat.checkSelfPermission(requireContext(),
+                Manifest.permission.ACTIVITY_RECOGNITION) != PackageManager.PERMISSION_GRANTED) {
+            requireRecognitionPermission();
+        } else {
+            recognitionPermissionGranted = true;
+        }
+    }
+
+    @RequiresApi(api = Build.VERSION_CODES.Q)
+    private void requireRecognitionPermission() {
+        requestPermissionLauncher2.launch(android.Manifest.permission.ACTIVITY_RECOGNITION);
+    }
+
+    private final ActivityResultLauncher<String> requestPermissionLauncher2 =
+            registerForActivityResult(new ActivityResultContracts.RequestPermission(), isGranted -> {
+                if (isGranted) {
+                    // TODO Can add some operations here?
+                    recognitionPermissionGranted = true;
+                    Log.d(TAG, "Permission Get Daze!");
+                } else {
+                    // TODO Can add some operations here?
+                    recognitionPermissionGranted = false;
+                    Log.d(TAG, "Permission Get Daze???");
+                }
+            });
 
     private void getLocationPermission() {
         //  Request location permission
