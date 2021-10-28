@@ -7,8 +7,6 @@ import android.Manifest;
 import android.annotation.SuppressLint;
 import android.content.pm.PackageManager;
 import android.graphics.Color;
-import android.hardware.Sensor;
-import android.hardware.SensorManager;
 import android.location.Location;
 import android.os.Build;
 import android.os.Bundle;
@@ -32,20 +30,18 @@ import androidx.fragment.app.Fragment;
 import androidx.lifecycle.ViewModelProvider;
 
 import com.example.fitsoc.R;
+import com.example.fitsoc.data.FitEvent;
+import com.example.fitsoc.data.RunningData;
 import com.example.fitsoc.databinding.FragmentRunBinding;
 import com.google.android.gms.auth.api.signin.GoogleSignIn;
 import com.google.android.gms.auth.api.signin.GoogleSignInAccount;
-import com.google.android.gms.common.api.GoogleApiClient;
-import com.google.android.gms.common.api.Scope;
 import com.google.android.gms.fitness.Fitness;
-import com.google.android.gms.fitness.FitnessActivities;
 import com.google.android.gms.fitness.FitnessOptions;
 import com.google.android.gms.fitness.data.DataSet;
 import com.google.android.gms.fitness.data.DataSource;
 import com.google.android.gms.fitness.data.DataType;
 import com.google.android.gms.fitness.data.Field;
 import com.google.android.gms.fitness.data.Session;
-import com.google.android.gms.fitness.data.Subscription;
 import com.google.android.gms.fitness.data.Value;
 import com.google.android.gms.fitness.request.DataSourcesRequest;
 import com.google.android.gms.fitness.request.OnDataPointListener;
@@ -73,6 +69,7 @@ import com.google.android.gms.tasks.CancellationToken;
 import com.google.android.gms.tasks.OnTokenCanceledListener;
 import com.google.android.gms.tasks.Task;
 
+import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.OptionalDouble;
@@ -81,6 +78,7 @@ import java.util.concurrent.TimeUnit;
 public class RunFragment extends Fragment implements OnMapReadyCallback,
         GoogleMap.OnMyLocationButtonClickListener,
         GoogleMap.OnMyLocationClickListener {
+
     private final String TAG = "Running";
 
     private GoogleMap map;
@@ -107,14 +105,13 @@ public class RunFragment extends Fragment implements OnMapReadyCallback,
     private long lastStopTime;
     private long startTime;
     private long totalTime;
-    private ArrayList<Long> distances;
-    private ArrayList<Long> speeds;
+    private ArrayList<Long> distances = new ArrayList<>();
+    private ArrayList<Long> speeds = new ArrayList<>();
 
-    private boolean isStartRunning;
     private FusedLocationProviderClient fusedLocationProviderClient;
     private LocationSettingsRequest.Builder builder;
     private LocationRequest locationRequest;
-    private List<Location> locationList;
+    private List<Location> locationList = new ArrayList<>();
     private Location lastKnownLocation;
     private Location startLocation;
     private Location stopLocation;
@@ -123,8 +120,9 @@ public class RunFragment extends Fragment implements OnMapReadyCallback,
     private GoogleSignInAccount account;
     private Session session;
 
-    private boolean firstRun;
-    private boolean requestingLocationUpdates;
+    private boolean isStartRunning = false;
+    private boolean firstRun = true;
+    private boolean requestingLocationUpdates = false;
     private boolean locationPermissionGranted = false;
     private boolean recognitionPermissionGranted = false;
 
@@ -135,11 +133,6 @@ public class RunFragment extends Fragment implements OnMapReadyCallback,
     public void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         fusedLocationProviderClient = LocationServices.getFusedLocationProviderClient(requireActivity());
-        locationList = new ArrayList<>();
-        distances = new ArrayList<>();
-        speeds = new ArrayList<>();
-        firstRun = true;
-        isStartRunning = false;
         if (!locationPermissionGranted) getLocationPermission();
         if (!recognitionPermissionGranted) getRecognitionPermission();
         model = new ViewModelProvider(this).get(RunViewModel.class);
@@ -153,6 +146,7 @@ public class RunFragment extends Fragment implements OnMapReadyCallback,
         View run = binding.getRoot();
         setBtnListeners();
         setTimer();
+        initiateFitness();
 
         mapView = (MapView) run.findViewById(R.id.mapview);
         mapView.onCreate(savedInstanceState);
@@ -191,8 +185,7 @@ public class RunFragment extends Fragment implements OnMapReadyCallback,
         mapView.onLowMemory();
     }
 
-    @RequiresApi(api = Build.VERSION_CODES.N)
-    private void setFitness() {
+    private void initiateFitness() {
         fitnessOptions = FitnessOptions
                 .builder()
                 .addDataType(DataType.TYPE_STEP_COUNT_DELTA, FitnessOptions.ACCESS_READ)
@@ -214,14 +207,18 @@ public class RunFragment extends Fragment implements OnMapReadyCallback,
         } else {
             Log.i(TAG, "Already has permissions");
         }
+    }
 
-
+    @RequiresApi(api = Build.VERSION_CODES.N)
+    private void setFitness() {
         // TODO TYPE_CALORIES_EXPENDED is not working
         // TODO TYPE_STEP_COUNT_CADENCE is not working
         Fitness.getSensorsClient(requireActivity(), account)
                 .findDataSources(
                         new DataSourcesRequest.Builder()
                                 .setDataTypes(
+                                        DataType.TYPE_CALORIES_EXPENDED,
+                                        DataType.TYPE_STEP_COUNT_CADENCE,
                                         DataType.TYPE_SPEED,
                                         DataType.TYPE_DISTANCE_DELTA)
                                 .setDataSourceTypes(DataSource.TYPE_DERIVED)
@@ -442,21 +439,30 @@ public class RunFragment extends Fragment implements OnMapReadyCallback,
     }
 
     //  Stop Running
-    @SuppressLint({"MissingPermission"})
     private void runningStop() {
         getLocation(false);
         lastStopTime = System.currentTimeMillis();
         runningPause();
-        showResult();
         removeFitListener();
-        // TODO store data here...
+        writeToDatabase();
     }
 
-    private void showResult() {
+    private void writeToDatabase() {
         long totalDistance = distances.stream().mapToLong(distance -> distance).sum();
-        Toast.makeText(requireContext(), "Distance: " + String.valueOf(totalDistance), Toast.LENGTH_SHORT).show();
+        Toast.makeText(requireContext(), "Distance: " + totalDistance, Toast.LENGTH_SHORT).show();
         OptionalDouble avgSpeed = speeds.stream().mapToLong(speed -> speed).average();
-        Toast.makeText(requireContext(), "Speed: " + String.valueOf(avgSpeed.getAsDouble()), Toast.LENGTH_SHORT).show();
+        Toast.makeText(requireContext(), "Speed: " + avgSpeed.getAsDouble(), Toast.LENGTH_SHORT).show();
+        RunningData data = new RunningData();
+        data.setDistance(totalDistance);
+        data.setSpeedAVG((long) avgSpeed.getAsDouble());
+        data.setStartTime(new Timestamp(startTime));
+        data.setEndTime(new Timestamp(lastStopTime));
+        data.setTotalTime(totalTime);
+        data.setStartLocation(locationList.get(0));
+        data.setEndLocation(locationList.get(locationList.size()-1));
+        FitEvent event = new FitEvent(data);
+        data.writeToDatabase();
+        event.writeToDatabase();
     }
 
     private void setBtnListeners() {
@@ -646,8 +652,8 @@ public class RunFragment extends Fragment implements OnMapReadyCallback,
     @Override
     public void onMapReady(@NonNull GoogleMap mMap) {
         map = mMap;
-        updateLocationUI();
         initiateLocation();
+        updateLocationUI();
         map.setMyLocationEnabled(true);
         map.getUiSettings().setMyLocationButtonEnabled(true);
         map.setOnMyLocationButtonClickListener(this);

@@ -45,6 +45,9 @@ dependencies {
     implementation 'androidx.navigation:navigation-ui:2.3.5'
     implementation 'com.sothree.slidinguppanel:library:3.4.0'
     implementation 'com.google.firebase:firebase-auth:21.0.1'
+    implementation platform('com.google.firebase:firebase-bom:28.4.2')
+    implementation 'com.google.firebase:firebase-database'
+    implementation 'com.google.firebase:firebase-firestore'
     implementation 'androidx.lifecycle:lifecycle-common-java8:2.3.1'
 
     testImplementation 'junit:junit:4.+'
