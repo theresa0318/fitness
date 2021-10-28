@@ -11,7 +11,6 @@ import android.text.Editable;
 import android.text.TextWatcher;
 import android.util.Log;
 import android.view.KeyEvent;
-import android.view.View;
 import android.view.inputmethod.EditorInfo;
 import android.widget.Button;
 import android.widget.EditText;
@@ -19,7 +18,8 @@ import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import androidx.annotation.NonNull;
+import androidx.annotation.NonNull;import android.view.View;
+
 import androidx.annotation.Nullable;
 import androidx.annotation.StringRes;
 import androidx.appcompat.app.AppCompatActivity;
@@ -42,8 +42,9 @@ public class RegisterActivity extends AppCompatActivity implements OnClickListen
     private LoginViewModel loginViewModel;
     private ActivityRegisterBinding bindingR;
     private FirebaseAuth mAuth;
-    private EditText usernameLoginEditText, passwordLoginEditText;
-
+    private EditText usernameRegisterEditText, passwordRegisterEditText;
+    private Button registerEmailButton;
+    private ProgressBar loadingProgressBar;
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -70,12 +71,13 @@ public class RegisterActivity extends AppCompatActivity implements OnClickListen
         loginViewModel = new ViewModelProvider(this, new LoginViewModelFactory())
                 .get(LoginViewModel.class);
 
-        usernameLoginEditText = bindingR.usernameRegister;
-        passwordLoginEditText = bindingR.passwordRegister;
+        usernameRegisterEditText = bindingR.usernameRegister;
+        passwordRegisterEditText = bindingR.passwordRegister;
         //final EditText usernameLoginEditText = bindingR.usernameRegister;
         //final EditText passwordLoginEditText = bindingR.passwordRegister;
-        final Button registerEmailButton = bindingR.registerEmail;
-        final ProgressBar loadingProgressBar = bindingR.loading;
+        registerEmailButton = bindingR.registerEmail;
+//        final ProgressBar loadingProgressBar = bindingR.loading;
+        loadingProgressBar = bindingR.loading;
 
         loginViewModel.getLoginFormState().observe(this, new Observer<LoginFormState>() {
             @Override
@@ -85,33 +87,33 @@ public class RegisterActivity extends AppCompatActivity implements OnClickListen
                 }
                 registerEmailButton.setEnabled(loginFormState.isDataValid());
                 if (loginFormState.getUsernameError() != null) {
-                    usernameLoginEditText.setError(getString(loginFormState.getUsernameError()));
+                    usernameRegisterEditText.setError(getString(loginFormState.getUsernameError()));
                 }
                 if (loginFormState.getPasswordError() != null) {
-                    passwordLoginEditText.setError(getString(loginFormState.getPasswordError()));
+                    passwordRegisterEditText.setError(getString(loginFormState.getPasswordError()));
                 }
             }
         });
 
-        loginViewModel.getLoginResult().observe(this, new Observer<LoginResult>() {
-            @Override
-            public void onChanged(@Nullable LoginResult loginResult) {
-                if (loginResult == null) {
-                    return;
-                }
-                loadingProgressBar.setVisibility(GONE);
-                if (loginResult.getError() != null) {
-                    showLoginFailed(loginResult.getError());
-                }
-                if (loginResult.getSuccess() != null) {
-                    updateUiWithUser(loginResult.getSuccess());
-                }
-                setResult(Activity.RESULT_OK);
-
-                //Complete and destroy login activity once successful
-                finish();
-            }
-        });
+//        loginViewModel.getLoginResult().observe(this, new Observer<LoginResult>() {
+//            @Override
+//            public void onChanged(@Nullable LoginResult loginResult) {
+//                if (loginResult == null) {
+//                    return;
+//                }
+//                loadingProgressBar.setVisibility(GONE);
+//                if (loginResult.getError() != null) {
+//                    showLoginFailed(loginResult.getError());
+//                }
+//                if (loginResult.getSuccess() != null) {
+//                    updateUiWithUser(loginResult.getSuccess());
+//                }
+//                setResult(Activity.RESULT_OK);
+//
+//                //Complete and destroy login activity once successful
+//                finish();
+//            }
+//        });
 
         TextWatcher afterTextChangedListener = new TextWatcher() {
             @Override
@@ -126,13 +128,13 @@ public class RegisterActivity extends AppCompatActivity implements OnClickListen
 
             @Override
             public void afterTextChanged(Editable s) {
-                loginViewModel.loginDataChanged(usernameLoginEditText.getText().toString(),
-                        passwordLoginEditText.getText().toString());
+                loginViewModel.loginDataChanged(usernameRegisterEditText.getText().toString(),
+                        passwordRegisterEditText.getText().toString());
             }
         };
-        usernameLoginEditText.addTextChangedListener(afterTextChangedListener);
-        passwordLoginEditText.addTextChangedListener(afterTextChangedListener);
-        passwordLoginEditText.setOnEditorActionListener(new TextView.OnEditorActionListener() {
+        usernameRegisterEditText.addTextChangedListener(afterTextChangedListener);
+        passwordRegisterEditText.addTextChangedListener(afterTextChangedListener);
+        passwordRegisterEditText.setOnEditorActionListener(new TextView.OnEditorActionListener() {
 
             @Override
             public boolean onEditorAction(TextView v, int actionId, KeyEvent event) {
@@ -174,45 +176,45 @@ public class RegisterActivity extends AppCompatActivity implements OnClickListen
     }
 
     public void register(){
-        String username = usernameLoginEditText.getText().toString();
-        String password = passwordLoginEditText.getText().toString();
+        String username = usernameRegisterEditText.getText().toString();
+        String password = passwordRegisterEditText.getText().toString();
+        loadingProgressBar.setVisibility(VISIBLE);
         mAuth.createUserWithEmailAndPassword(username, password)
-                .addOnCompleteListener(this, new OnCompleteListener<AuthResult>(){
-                    @Override
-                    public void onComplete(@NonNull Task<AuthResult> task) {
-                        if (task.isSuccessful()) {
-                            // Register success, display a message to the user, then redirect to login page.
-                            Log.d(TAG, "createUserWithEmail:success");
-                            FirebaseUser user = mAuth.getCurrentUser();
-                            FirebaseDatabase database = FirebaseDatabase.getInstance();
-                            DatabaseReference myRef = database.getReference();
-
-                            RegisteredUser newUser = new RegisteredUser(username, password);
-                            myRef.child("users").child(newUser.getUserId().replace(".",",")).setValue(newUser);
-                            //myRef.child("users").child(loggedInUser.getDisplayName()).setValue(loggedInUser);
-
-                            Toast.makeText(RegisterActivity.this, "Congratulations! You have registered successfully.",
-                                    Toast.LENGTH_SHORT).show();
-                            Intent intent = new Intent(RegisterActivity.this, LoginActivity.class);
-                            startActivity(intent);
-                        } else {
-                            // If register fails, display a message to the user.
-                            Log.w(TAG, "createUserWithEmail:failure", task.getException());
-                            Toast.makeText(RegisterActivity.this, "Email already registered! Please try another one.",
-                                    Toast.LENGTH_SHORT).show();
-                        }
+                .addOnCompleteListener(this, task -> {
+                    if (task.isSuccessful()) {
+                        FirebaseUser user = mAuth.getCurrentUser();
+                        FirebaseDatabase database = FirebaseDatabase.getInstance();
+                        DatabaseReference myRef = database.getReference();
+                        RegisteredUser newUser = new RegisteredUser(username, password);
+                        //myRef.child("users").child(loggedInUser.getDisplayName()).setValue(loggedInUser);
+                        myRef.child("users").child(newUser.getUserId().replace(".", ",")).setValue(newUser).addOnCompleteListener(task1 -> {
+                            if (task1.isSuccessful()) {
+                                // Register success, display a message to the user, then redirect to login page.
+                                Log.d(TAG, "createUserWithEmail:success");
+                                Toast.makeText(RegisterActivity.this, "Congratulations! You have registered successfully.", Toast.LENGTH_SHORT).show();
+                                loadingProgressBar.setVisibility(GONE);
+                                Intent intent = new Intent(RegisterActivity.this, LoginActivity.class);
+                                startActivity(intent);
+                            }
+                        });
+                    } else{
+                        // If register fails, display a message to the user.
+                        Log.w(TAG, "createUserWithEmail:failure", task.getException());
+                        Toast.makeText(RegisterActivity.this, "Email already registered! Please try another one.",
+                                Toast.LENGTH_SHORT).show();
+                        loadingProgressBar.setVisibility(GONE);
                     }
-                });
+            });
     }
 
-    private void updateUiWithUser(LoggedInUserView model) {
-        String welcome = getString(R.string.welcome) ;
-        // TODO : initiate successful logged in experience
-        Toast.makeText(getApplicationContext(), welcome, Toast.LENGTH_LONG).show();
-    }
-
-    private void showLoginFailed(@StringRes Integer errorString) {
-        Toast.makeText(getApplicationContext(), errorString, Toast.LENGTH_SHORT).show();
-    }
+//    private void updateUiWithUser(LoggedInUserView model) {
+//        String welcome = getString(R.string.welcome) ;
+//        // TODO : initiate successful logged in experience
+//        Toast.makeText(getApplicationContext(), welcome, Toast.LENGTH_LONG).show();
+//    }
+//
+//    private void showLoginFailed(@StringRes Integer errorString) {
+//        Toast.makeText(getApplicationContext(), errorString, Toast.LENGTH_SHORT).show();
+//    }
 
 }
