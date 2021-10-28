@@ -185,7 +185,7 @@ public class RegisterActivity extends AppCompatActivity implements OnClickListen
                         FirebaseUser user = mAuth.getCurrentUser();
                         FirebaseDatabase database = FirebaseDatabase.getInstance();
                         DatabaseReference myRef = database.getReference();
-                        RegisteredUser newUser = new RegisteredUser(username, password);
+                        RegisteredUser newUser = new RegisteredUser(username);
                         //myRef.child("users").child(loggedInUser.getDisplayName()).setValue(loggedInUser);
                         myRef.child("users").child(newUser.getUserId().replace(".", ",")).setValue(newUser).addOnCompleteListener(task1 -> {
                             if (task1.isSuccessful()) {
