@@ -10,14 +10,12 @@ import java.util.Map;
 
 public class FitEvent {
     private final String TAG = "Event -> Store";
-    private final FirebaseDatabase database;
     public String date;
     public String userID;
     public long duration;
     public long distance;
 
     public FitEvent(RunningData data) {
-        database = FirebaseDatabase.getInstance();
         date = data.date;
         userID = data.userID;
         duration = data.totalTime;
