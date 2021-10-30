@@ -61,7 +61,7 @@ public class ProfileFragment extends Fragment {
         user = mAuth.getCurrentUser();
 //        FirebaseDatabase db = FirebaseDatabase.getInstance();
         reference = FirebaseDatabase.getInstance().getReference().child("users");
-        String userID = user.getUid();
+        String userID = user.getEmail().replace('.', ',');
 
         storage = FirebaseStorage.getInstance();
         storageReference = storage.getReference();
