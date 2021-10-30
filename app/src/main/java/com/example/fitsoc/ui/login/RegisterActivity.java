@@ -67,16 +67,12 @@ public class RegisterActivity extends AppCompatActivity implements OnClickListen
         //EditText usernameLoginEditText = (EditText) findViewById(R.id.username_register);
         //EditText passwordLoginEditText = (EditText) findViewById(R.id.password_register);
 
-        //
         loginViewModel = new ViewModelProvider(this, new LoginViewModelFactory())
                 .get(LoginViewModel.class);
 
         usernameRegisterEditText = bindingR.usernameRegister;
         passwordRegisterEditText = bindingR.passwordRegister;
-        //final EditText usernameLoginEditText = bindingR.usernameRegister;
-        //final EditText passwordLoginEditText = bindingR.passwordRegister;
         registerEmailButton = bindingR.registerEmail;
-//        final ProgressBar loadingProgressBar = bindingR.loading;
         loadingProgressBar = bindingR.loading;
 
         loginViewModel.getLoginFormState().observe(this, new Observer<LoginFormState>() {

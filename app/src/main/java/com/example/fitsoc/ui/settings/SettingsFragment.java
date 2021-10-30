@@ -14,6 +14,7 @@ import android.widget.Toast;
 import androidx.annotation.NonNull;
 import androidx.fragment.app.Fragment;
 
+import com.example.fitsoc.NavigationActivity;
 import com.example.fitsoc.R;
 import com.example.fitsoc.data.model.RegisteredUser;
 import com.example.fitsoc.databinding.ActivityLoginBinding;
@@ -127,14 +128,14 @@ public class SettingsFragment extends Fragment implements View.OnClickListener {
         DatabaseReference myRef = database.getReference();
         myRef.child("users").child(user.getEmail().replace(".", ",")).setValue(updatedUser).addOnCompleteListener(task1 -> {
             if (task1.isSuccessful()) {
-                // Register success, display a message to the user, then redirect to login page.
+                // Change settings successfully, display a message to the user, then redirect to nav page.
                 Log.d(TAG, "updateUserSettings:success");
                 Toast.makeText(this.getActivity(), "You have updated your settings successfully.", Toast.LENGTH_SHORT).show();
-                //Intent intent = new Intent(this.getActivity(), this.getActivity().getClass());
-                //startActivity(intent);
+//                Intent intent = new Intent(this.getActivity(), NavigationActivity.class);
+//                startActivity(intent);
             }
             else {
-                // If register fails, display a message to the user.
+                // If it fails to change settings, display a message to the user.
                 Log.w(TAG, "updateUserSettings:failure", task1.getException());
                 Toast.makeText(this.getActivity(), "Fail to update settings! Please try again.",
                         Toast.LENGTH_SHORT).show();

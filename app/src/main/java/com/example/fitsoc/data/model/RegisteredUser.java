@@ -7,8 +7,7 @@ public class RegisteredUser {
     private int age;
     private int height;
     private int weight;
-
-
+    private String imageurl;
 
     public RegisteredUser() {
         // Default constructor required for calls to DataSnapshot.getValue(User.class)
