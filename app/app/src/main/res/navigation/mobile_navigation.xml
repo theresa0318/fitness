@@ -19,9 +19,9 @@
 
     <fragment
         android:id="@+id/nav_calorie"
-        android:name="com.example.fitsoc.ui.calorie.CalorieCalculatorFragment"
+        android:name="com.example.fitsoc.ui.rank.RankFragment"
         android:label="@string/menu_calorie"
-        tools:layout="@layout/fragment_calorie_calculator" />
+        tools:layout="@layout/fragment_rank" />
 
     <fragment
         android:id="@+id/nav_history"

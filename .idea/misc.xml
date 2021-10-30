@@ -3,14 +3,18 @@
   <component name="DesignSurface">
     <option name="filePathToZoomLevelMap">
       <map>
-        <entry key="..\:/Users/yusim/Documents/GitHub/fitness/app/src/main/res/layout/activity_frontpage.xml" value="0.1" />
-        <entry key="..\:/Users/yusim/Documents/GitHub/fitness/app/src/main/res/layout/activity_navigation.xml" value="0.22" />
-        <entry key="..\:/Users/yusim/Documents/GitHub/fitness/app/src/main/res/layout/activity_register.xml" value="0.14666666666666667" />
-        <entry key="..\:/Users/yusim/Documents/GitHub/fitness/app/src/main/res/layout/fragment_profile.xml" value="0.22" />
+        <entry key="..\:/Users/There/OneDrive/Desktop/MCP/fitness/app/src/main/res/layout/activity_login.xml" value="0.15670289855072464" />
+        <entry key="..\:/Users/There/OneDrive/Desktop/MCP/fitness/app/src/main/res/layout/fragment_calorie_calculator.xml" value="0.16304347826086957" />
+        <entry key="..\:/Users/There/OneDrive/Desktop/MCP/fitness/app/src/main/res/layout/fragment_profile.xml" value="0.15670289855072464" />
+        <entry key="..\:/Users/There/OneDrive/Desktop/MCP/fitness/app/src/main/res/layout/fragment_rank.xml" value="0.22" />
+        <entry key="..\:/Users/There/OneDrive/Desktop/MCP/fitness/app/src/main/res/layout/fragment_settings.xml" value="0.17864583333333334" />
+        <entry key="..\:/Users/There/OneDrive/Desktop/MCP/fitness/app/src/main/res/layout/nav_header_navigation.xml" value="0.16304347826086957" />
+        <entry key="..\:/Users/There/OneDrive/Desktop/MCP/fitness/app/src/main/res/menu/activity_navigation_drawer_drawer.xml" value="0.17864583333333334" />
+        <entry key="..\:/Users/There/OneDrive/Desktop/MCP/fitness/app/src/main/res/menu/navigation.xml" value="0.17864583333333334" />
       </map>
     </option>
   </component>
-  <component name="ProjectRootManager" version="2" languageLevel="JDK_15" project-jdk-name="11" project-jdk-type="JavaSDK">
+  <component name="ProjectRootManager" version="2" languageLevel="JDK_11" default="true" project-jdk-name="11" project-jdk-type="JavaSDK">
     <output url="file://$PROJECT_DIR$/build/classes" />
   </component>
   <component name="ProjectType">

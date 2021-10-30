@@ -9,7 +9,7 @@ import androidx.fragment.app.Fragment;
 
 import com.example.fitsoc.R;
 
-public class CalorieCalculatorFragment extends Fragment {
+public class RankFragment extends Fragment {
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
