@@ -18,10 +18,10 @@
         tools:layout="@layout/fragment_community" />
 
     <fragment
-        android:id="@+id/nav_calorie"
-        android:name="com.example.fitsoc.ui.calorie.CalorieCalculatorFragment"
-        android:label="@string/menu_calorie"
-        tools:layout="@layout/fragment_calorie_calculator" />
+        android:id="@+id/nav_task"
+        android:name="com.example.fitsoc.ui.task.TaskFragment"
+        android:label="@string/menu_task"
+        tools:layout="@layout/fragment_task" />
 
     <fragment
         android:id="@+id/nav_history"
