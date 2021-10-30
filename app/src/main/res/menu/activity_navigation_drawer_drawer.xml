@@ -13,9 +13,9 @@
             android:icon="@drawable/community_icon"
             android:title="@string/menu_community" />
         <item
-            android:id="@+id/nav_calorie"
+            android:id="@+id/nav_task"
             android:icon="@drawable/calculator_icon"
-            android:title="@string/menu_calorie" />
+            android:title="@string/menu_task" />
         <item
             android:id="@+id/nav_history"
             android:icon="@drawable/file_icon"
