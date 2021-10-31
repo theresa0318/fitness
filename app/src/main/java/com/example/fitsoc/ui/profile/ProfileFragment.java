@@ -160,6 +160,8 @@ public class ProfileFragment extends Fragment {
                     if (!imageUrl.equals(DEFAULT_IMAGE_URL)){
                         new DownloadImageTask(profileAvatar)
                                 .execute(imageUrl);
+                    } else {
+                        profileAvatar.setImageResource(R.drawable.profile_icon);
                     }
                 }
             }
