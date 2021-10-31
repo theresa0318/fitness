@@ -26,10 +26,14 @@ import com.google.android.gms.tasks.Task;
 import com.google.firebase.auth.EmailAuthCredential;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
+import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 
 import org.jetbrains.annotations.NotNull;
+
+import java.util.HashMap;
+import java.util.Map;
 
 import static android.content.ContentValues.TAG;
 import static android.view.View.GONE;
@@ -117,8 +121,31 @@ public class SettingsFragment extends Fragment implements View.OnClickListener {
                 });
 
         FirebaseDatabase database = FirebaseDatabase.getInstance();
-        Log.d(TAG, user.getEmail());
+        //Log.d(TAG, user.getEmail());
+        DatabaseReference usersRef = database.getReference().child("users");
+        DatabaseReference userRef = usersRef.child(user.getEmail().replace(".", ","));
+        Map<String, Object> userUpdates = new HashMap<>();
+        userUpdates.put("gender", gender);
+        userUpdates.put("age", Integer.parseInt(String.valueOf(ageText.getText())));
+        userUpdates.put("height", Integer.parseInt(String.valueOf(heightText.getText())));
+        userUpdates.put("weight", Integer.parseInt(String.valueOf(weightText.getText())));
+        userRef.updateChildren(userUpdates,new DatabaseReference.CompletionListener() {
+            @Override
+            public void onComplete(DatabaseError databaseError, DatabaseReference databaseReference) {
+                if (databaseError != null) {
+                    Log.w(TAG, "updateUserSettings:failure");
+                    Toast.makeText(getActivity(), "Fail to update settings! Please try again.",
+                            Toast.LENGTH_SHORT).show();
+                } else {
+                    Log.d(TAG, "updateUserSettings:success");
+                    Toast.makeText(getActivity(), "You have updated your settings successfully.", Toast.LENGTH_SHORT).show();
+                }
+            }
+        });
 
+
+
+        /*
         RegisteredUser updatedUser = new RegisteredUser(user.getEmail());
         updatedUser.setGender(gender);
         updatedUser.setAge(Integer.parseInt(String.valueOf(ageText.getText())));
@@ -141,7 +168,7 @@ public class SettingsFragment extends Fragment implements View.OnClickListener {
                         Toast.LENGTH_SHORT).show();
             }
         });
-
+        */
     }
 
 }
