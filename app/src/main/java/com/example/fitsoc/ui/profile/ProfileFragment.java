@@ -52,6 +52,8 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.UUID;
 
 public class ProfileFragment extends Fragment {
@@ -129,7 +131,7 @@ public class ProfileFragment extends Fragment {
             }
         });
 
-        reference.child(userID).addValueEventListener(new ValueEventListener() {
+        reference.child(userID).addListenerForSingleValueEvent(new ValueEventListener() {
             @SuppressLint("SetTextI18n")
             @Override
             public void onDataChange(@NonNull DataSnapshot snapshot) {
@@ -223,16 +225,16 @@ public class ProfileFragment extends Fragment {
             @Override
             public void onSuccess(UploadTask.TaskSnapshot taskSnapshot) {
                 pd.dismiss();
-                Toast.makeText(getContext(), "Image uploaded.", Toast.LENGTH_SHORT).show();
+                //Toast.makeText(getContext(), "Image uploaded.", Toast.LENGTH_SHORT).show();
 
-
+                /*
                 RegisteredUser updatedUser = new RegisteredUser(user.getEmail());
                 //updatedUser.setImageUrl(taskSnapshot.toString());
                 updatedUser.setGender(gender);
                 updatedUser.setAge(age);
                 updatedUser.setHeight(height);
                 updatedUser.setWeight(weight);
-                
+                */
 
                 final StorageReference ref = storage.getReference().child("images/"+username);
                 //uploadTask = ref.putFile(file);
@@ -243,7 +245,7 @@ public class ProfileFragment extends Fragment {
                         if (!task.isSuccessful()) {
                             throw task.getException();
                         }
-                        Log.d(TAG, "Get download url");
+                        //Log.d(TAG, "Get download url");
                         // Continue with the task to get the download URL
                         return ref.getDownloadUrl();
                     }
@@ -253,12 +255,31 @@ public class ProfileFragment extends Fragment {
                         if (task.isSuccessful()) {
                             Uri downloadUri = task.getResult();
                             imageUrl = String.valueOf(downloadUri);
-                            updatedUser.setImageUrl(imageUrl);
+                            //updatedUser.setImageUrl(imageUrl);
                             Log.d(TAG, imageUrl);
-                            db.getReference().child("users").child(updatedUser.getUserId().replace(".", ",")).setValue(updatedUser);
+
+                            DatabaseReference userRef = db.getReference().child("users").child(username.replace(".", ","));
+                            Map<String, Object> userUpdate = new HashMap<>();
+                            userUpdate.put("imageUrl", imageUrl);
+                            userRef.updateChildren(userUpdate,new DatabaseReference.CompletionListener() {
+                                @Override
+                                public void onComplete(DatabaseError databaseError, DatabaseReference databaseReference) {
+                                    if (databaseError != null) {
+                                        Log.w(TAG, "uploadImageUrl:failure");
+                                        Toast.makeText(getActivity(), "Fail to upload profile image! Please try again.",
+                                                Toast.LENGTH_SHORT).show();
+                                    } else {
+                                        Log.d(TAG, "uploadImageUrl:success");
+                                        Toast.makeText(getActivity(), "You have uploaded your profile image successfully.", Toast.LENGTH_SHORT).show();
+                                    }
+                                }
+                            });
+
+                            //db.getReference().child("users").child(updatedUser.getUserId().replace(".", ",")).setValue(updatedUser);
                         } else {
-                            // Handle failures
-                            // ...
+                            Log.w(TAG, "getImageUrl:failure");
+                            Toast.makeText(getActivity(), "Fail to upload profile image! Please try again.",
+                                    Toast.LENGTH_SHORT).show();
                         }
                     }
                 });
@@ -267,7 +288,7 @@ public class ProfileFragment extends Fragment {
             @Override
             public void onFailure(@NonNull Exception e) {
                 pd.dismiss();
-                Toast.makeText(getContext(), "Failed to upload.", Toast.LENGTH_SHORT).show();
+                Toast.makeText(getContext(), "Fail to upload profile image! Please try again.", Toast.LENGTH_SHORT).show();
             }
         }).addOnProgressListener(new OnProgressListener<UploadTask.TaskSnapshot>() {
             @Override
