@@ -15,6 +15,8 @@ public class RegisteredUser {
 
     public RegisteredUser(String userId) {
         this.userId = userId;
+        this.gender = null;
+        this.imageUrl= "@drawable/profile_icon";
     }
 
     public String getUserId() {
