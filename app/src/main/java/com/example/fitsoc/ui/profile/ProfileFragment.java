@@ -1,13 +1,20 @@
 package com.example.fitsoc.ui.profile;
 
 import static android.app.Activity.RESULT_OK;
+import static android.content.ContentValues.TAG;
 
 import android.annotation.SuppressLint;
 import android.app.ProgressDialog;
 import android.content.Intent;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
+import android.graphics.drawable.Drawable;
 import android.net.Uri;
+import android.nfc.Tag;
+import android.os.AsyncTask;
 import android.os.Bundle;
 import android.provider.MediaStore;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -23,6 +30,7 @@ import androidx.fragment.app.Fragment;
 import com.example.fitsoc.R;
 import com.example.fitsoc.data.model.RegisteredUser;
 import com.example.fitsoc.ui.login.RegisterActivity;
+import com.google.android.gms.tasks.Continuation;
 import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.gms.tasks.OnSuccessListener;
@@ -40,6 +48,10 @@ import com.google.firebase.storage.OnProgressListener;
 import com.google.firebase.storage.StorageReference;
 import com.google.firebase.storage.UploadTask;
 
+import java.io.IOException;
+import java.io.InputStream;
+import java.net.MalformedURLException;
+import java.net.URL;
 import java.util.UUID;
 
 public class ProfileFragment extends Fragment {
@@ -59,6 +71,34 @@ public class ProfileFragment extends Fragment {
     private int height;
     private int weight;
     private String imageUrl;
+    private static final String DEFAULT_IMAGE_URL="@drawable/profile_icon";
+
+
+    private class DownloadImageTask extends AsyncTask<String, Void, Bitmap> {
+        ImageView bmImage;
+
+        public DownloadImageTask(ImageView bmImage) {
+            this.bmImage = bmImage;
+        }
+
+        protected Bitmap doInBackground(String... urls) {
+            //String urldisplay = urls[0];
+            Bitmap mIcon11 = null;
+            try {
+                InputStream in = new java.net.URL(imageUrl).openStream();
+                mIcon11 = BitmapFactory.decodeStream(in);
+            } catch (Exception e) {
+                Log.e("Error loading picture", e.getMessage());
+                e.printStackTrace();
+            }
+            return mIcon11;
+        }
+
+        protected void onPostExecute(Bitmap result) {
+            bmImage.setImageBitmap(result);
+        }
+    }
+
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
@@ -89,25 +129,36 @@ public class ProfileFragment extends Fragment {
             }
         });
 
-        reference.child(userID).addListenerForSingleValueEvent(new ValueEventListener() {
+        reference.child(userID).addValueEventListener(new ValueEventListener() {
             @SuppressLint("SetTextI18n")
             @Override
             public void onDataChange(@NonNull DataSnapshot snapshot) {
                 RegisteredUser userProfile = snapshot.getValue(RegisteredUser.class);
-                if (userProfile != null){
-//                    String avatar = userProfile.getImageUrl();
+                if (userProfile != null) {
+
                     username = userProfile.getUserId();
                     gender = userProfile.getGender();
                     age = userProfile.getAge();
                     height = userProfile.getHeight();
                     weight = userProfile.getWeight();
+                    imageUrl = userProfile.getImageUrl();
 
-//                    profileAvatar.setImageURI();
+
                     profileUsername.setText("Username: " + username);
                     profileGender.setText("Gender: " + gender);
                     profileAge.setText("Age: " + age);
                     profileHeight.setText("Height: " + height + " cm");
                     profileWeight.setText("Weight: " + weight + " kg");
+                    //int imageResource = getResources().getIdentifier(imageUrl, "drawable", getContext().getPackageName());
+                    //Drawable res = getResources().getDrawable(imageResource);
+                    //profileAvatar.setImageDrawable(res);
+                    //profileAvatar.setImageURI(Uri.parse(imageUrl));
+
+                    // load image from url if not default picture
+                    if (!imageUrl.equals(DEFAULT_IMAGE_URL)){
+                        new DownloadImageTask(profileAvatar)
+                                .execute(imageUrl);
+                    }
                 }
             }
 
@@ -164,22 +215,53 @@ public class ProfileFragment extends Fragment {
         pd.setTitle("Uploading");
         pd.show();
 
-        final String randomKey = UUID.randomUUID().toString();
-        StorageReference riversRef = storageReference.child("images/" + randomKey);
+        //final String randomKey = UUID.randomUUID().toString();
 
-        riversRef.putFile(imageUri).addOnSuccessListener(new OnSuccessListener<UploadTask.TaskSnapshot>() {
+        StorageReference riversRef = storageReference.child("images/" + username);
+        UploadTask uploadTask = riversRef.putFile(imageUri);
+        uploadTask.addOnSuccessListener(new OnSuccessListener<UploadTask.TaskSnapshot>() {
             @Override
             public void onSuccess(UploadTask.TaskSnapshot taskSnapshot) {
                 pd.dismiss();
                 Toast.makeText(getContext(), "Image uploaded.", Toast.LENGTH_SHORT).show();
 
+
                 RegisteredUser updatedUser = new RegisteredUser(user.getEmail());
-                updatedUser.setImageUrl(taskSnapshot.toString());
+                //updatedUser.setImageUrl(taskSnapshot.toString());
                 updatedUser.setGender(gender);
                 updatedUser.setAge(age);
                 updatedUser.setHeight(height);
                 updatedUser.setWeight(weight);
-                db.getReference().child("users").child(updatedUser.getUserId().replace(".", ",")).setValue(updatedUser);
+                
+
+                final StorageReference ref = storage.getReference().child("images/"+username);
+                //uploadTask = ref.putFile(file);
+
+                Task<Uri> urlTask = uploadTask.continueWithTask(new Continuation<UploadTask.TaskSnapshot, Task<Uri>>() {
+                    @Override
+                    public Task<Uri> then(@NonNull Task<UploadTask.TaskSnapshot> task) throws Exception {
+                        if (!task.isSuccessful()) {
+                            throw task.getException();
+                        }
+                        Log.d(TAG, "Get download url");
+                        // Continue with the task to get the download URL
+                        return ref.getDownloadUrl();
+                    }
+                }).addOnCompleteListener(new OnCompleteListener<Uri>() {
+                    @Override
+                    public void onComplete(@NonNull Task<Uri> task) {
+                        if (task.isSuccessful()) {
+                            Uri downloadUri = task.getResult();
+                            imageUrl = String.valueOf(downloadUri);
+                            updatedUser.setImageUrl(imageUrl);
+                            Log.d(TAG, imageUrl);
+                            db.getReference().child("users").child(updatedUser.getUserId().replace(".", ",")).setValue(updatedUser);
+                        } else {
+                            // Handle failures
+                            // ...
+                        }
+                    }
+                });
             }
         }).addOnFailureListener(new OnFailureListener() {
             @Override
