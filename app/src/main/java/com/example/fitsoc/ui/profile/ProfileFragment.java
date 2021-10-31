@@ -53,6 +53,12 @@ public class ProfileFragment extends Fragment {
     private DatabaseReference reference;
     private FirebaseStorage storage;
     private StorageReference storageReference;
+    private String username;
+    private String gender;
+    private int age;
+    private int height;
+    private int weight;
+    private String imageUrl;
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
@@ -90,11 +96,11 @@ public class ProfileFragment extends Fragment {
                 RegisteredUser userProfile = snapshot.getValue(RegisteredUser.class);
                 if (userProfile != null){
 //                    String avatar = userProfile.getImageUrl();
-                    String username = userProfile.getUserId();
-                    String gender = userProfile.getGender();
-                    int age = userProfile.getAge();
-                    int height = userProfile.getHeight();
-                    int weight = userProfile.getWeight();
+                    username = userProfile.getUserId();
+                    gender = userProfile.getGender();
+                    age = userProfile.getAge();
+                    height = userProfile.getHeight();
+                    weight = userProfile.getWeight();
 
 //                    profileAvatar.setImageURI();
                     profileUsername.setText("Username: " + username);
@@ -168,10 +174,6 @@ public class ProfileFragment extends Fragment {
                 Toast.makeText(getContext(), "Image uploaded.", Toast.LENGTH_SHORT).show();
 
                 RegisteredUser updatedUser = new RegisteredUser(user.getEmail());
-                String gender = updatedUser.getGender();
-                int age = updatedUser.getAge();
-                int height = updatedUser.getHeight();
-                int weight = updatedUser.getWeight();
                 updatedUser.setImageUrl(taskSnapshot.toString());
                 updatedUser.setGender(gender);
                 updatedUser.setAge(age);
