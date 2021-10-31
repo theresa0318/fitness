@@ -7,7 +7,7 @@ public class RegisteredUser {
     private int age;
     private int height;
     private int weight;
-    private String imageurl;
+    private String imageUrl;
 
     public RegisteredUser() {
         // Default constructor required for calls to DataSnapshot.getValue(User.class)
@@ -37,6 +37,8 @@ public class RegisteredUser {
         return weight;
     }
 
+    public String getImageUrl() { return imageUrl; }
+
     public void setGender(String gender) { this.gender = gender;}
 
     public void setAge(int age) { this.age = age;}
@@ -44,5 +46,7 @@ public class RegisteredUser {
     public void setHeight(int height) { this.height = height;}
 
     public void setWeight(int weight) { this.weight = weight;}
+
+    public void setImageUrl(String imageUrl){ this.imageUrl = imageUrl; }
 
 }

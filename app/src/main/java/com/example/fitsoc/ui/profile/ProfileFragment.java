@@ -23,8 +23,10 @@ import androidx.fragment.app.Fragment;
 import com.example.fitsoc.R;
 import com.example.fitsoc.data.model.RegisteredUser;
 import com.example.fitsoc.ui.login.RegisterActivity;
+import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.gms.tasks.OnSuccessListener;
+import com.google.android.gms.tasks.Task;
 import com.google.android.material.snackbar.Snackbar;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
@@ -47,6 +49,7 @@ public class ProfileFragment extends Fragment {
     public Uri imageUri;
     private FirebaseAuth mAuth;
     private FirebaseUser user;
+    private FirebaseDatabase db;
     private DatabaseReference reference;
     private FirebaseStorage storage;
     private StorageReference storageReference;
@@ -59,7 +62,7 @@ public class ProfileFragment extends Fragment {
 
         mAuth = FirebaseAuth.getInstance();
         user = mAuth.getCurrentUser();
-//        FirebaseDatabase db = FirebaseDatabase.getInstance();
+        db = FirebaseDatabase.getInstance();
         reference = FirebaseDatabase.getInstance().getReference().child("users");
         String userID = user.getEmail().replace('.', ',');
 
@@ -86,12 +89,14 @@ public class ProfileFragment extends Fragment {
             public void onDataChange(@NonNull DataSnapshot snapshot) {
                 RegisteredUser userProfile = snapshot.getValue(RegisteredUser.class);
                 if (userProfile != null){
+//                    String avatar = userProfile.getImageUrl();
                     String username = userProfile.getUserId();
                     String gender = userProfile.getGender();
                     int age = userProfile.getAge();
                     int height = userProfile.getHeight();
                     int weight = userProfile.getWeight();
 
+//                    profileAvatar.setImageURI();
                     profileUsername.setText("Username: " + username);
                     profileGender.setText("Gender: " + gender);
                     profileAge.setText("Age: " + age);
@@ -126,6 +131,25 @@ public class ProfileFragment extends Fragment {
             imageUri = data.getData();
             profileAvatar.setImageURI(imageUri);
             uploadPicture();
+//            String uid = user.getEmail().replace(".", ",");
+//            StorageReference picRef = FirebaseStorage.getInstance().getReference().child("users").child(uid);
+//            picRef.putFile(imageUri).addOnCompleteListener(new OnCompleteListener<UploadTask.TaskSnapshot>() {
+//                @Override
+//                public void onComplete(@NonNull Task<UploadTask.TaskSnapshot> task) {
+//                    if (task.isSuccessful()) {
+//                        picRef.getDownloadUrl().addOnCompleteListener(new OnCompleteListener<Uri>() {
+//                            @Override
+//                            public void onComplete(@NonNull Task<Uri> task) {
+//                                RegisteredUser newUser = new RegisteredUser();
+//                                newUser.setImageurl(task.toString());
+//                                db.getReference().child("users").child(newUser.getUserId().replace(".", ",")).setValue(newUser);
+//                            }
+//                        });
+//                    } else {
+//                        Toast.makeText(getContext(), "Something wrong happened.", Toast.LENGTH_SHORT).show();
+//                    }
+//                }
+//            });
         }
     }
 
@@ -142,6 +166,18 @@ public class ProfileFragment extends Fragment {
             public void onSuccess(UploadTask.TaskSnapshot taskSnapshot) {
                 pd.dismiss();
                 Toast.makeText(getContext(), "Image uploaded.", Toast.LENGTH_SHORT).show();
+
+                RegisteredUser updatedUser = new RegisteredUser(user.getEmail());
+                String gender = updatedUser.getGender();
+                int age = updatedUser.getAge();
+                int height = updatedUser.getHeight();
+                int weight = updatedUser.getWeight();
+                updatedUser.setImageUrl(taskSnapshot.toString());
+                updatedUser.setGender(gender);
+                updatedUser.setAge(age);
+                updatedUser.setHeight(height);
+                updatedUser.setWeight(weight);
+                db.getReference().child("users").child(updatedUser.getUserId().replace(".", ",")).setValue(updatedUser);
             }
         }).addOnFailureListener(new OnFailureListener() {
             @Override
