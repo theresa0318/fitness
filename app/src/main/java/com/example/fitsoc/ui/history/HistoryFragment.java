@@ -41,6 +41,9 @@ public class HistoryFragment extends Fragment {
         binding = FragmentHistoryBinding.inflate(inflater, container, false);
         userID = "abcdefg@gmail.com";
         setListeners();
+        Calendar c = Calendar.getInstance();
+        String date = generateDateString(c.get(Calendar.YEAR),c.get(Calendar.MONTH),c.get(Calendar.DAY_OF_MONTH));
+        getDataFromDatabase(date);
         return binding.getRoot();
     }
 
@@ -62,10 +65,16 @@ public class HistoryFragment extends Fragment {
 
     @SuppressLint("SetTextI18n")
     private void updateUI(Map<String, Object> data, int rank) {
-        long distance = Math.round(((long) data.get("distance") / 1000));
-        String distanceString = "" + distance;
-        binding.textDistance.setText("Distance: " +
-                distanceString + " KM");
+        double distance = (long)data.get("distance") / 1.0;
+
+        if(distance < 1000){
+            String distanceString = "" + (int)distance;
+            binding.textDistance.setText("Distance: " +
+                    distanceString + " M");
+        }else{
+            binding.textDistance.setText("Distance: " +
+                    String.format("%.2f", distance / 1000) + " KM");
+        }
         long duration = Math.round((long) data.get("duration") / 1000);
         String durationString = "" + duration;
         binding.textTime.setText("Time: " + durationString + " min");
@@ -73,7 +82,7 @@ public class HistoryFragment extends Fragment {
     }
 
 
-    private void getDataFromDatabase(String date) {
+    public void getDataFromDatabase(String date) {
         FirebaseFirestore db = FirebaseFirestore.getInstance();
         db.collection("events")
                 .whereEqualTo("date", date)
