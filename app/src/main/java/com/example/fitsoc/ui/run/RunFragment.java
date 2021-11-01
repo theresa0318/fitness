@@ -90,6 +90,7 @@ public class RunFragment extends Fragment implements OnMapReadyCallback,
     private FragmentRunBinding binding;
     private Runnable timerRunnable;
     private RunViewModel model;
+    private ImageButton share;
 
     private MarkerOptions startOptions;
     private MarkerOptions endOptions;
@@ -125,6 +126,8 @@ public class RunFragment extends Fragment implements OnMapReadyCallback,
     private boolean requestingLocationUpdates = false;
     private boolean locationPermissionGranted = false;
     private boolean recognitionPermissionGranted = false;
+    private boolean isRunningEnd = false;
+    private boolean isRunningCont = false;
 
     private final Handler timerHandler = new Handler();
 
@@ -328,12 +331,12 @@ public class RunFragment extends Fragment implements OnMapReadyCallback,
         Fitness.getRecordingClient(requireContext(), GoogleSignIn.getAccountForExtension(requireContext(), fitnessOptions))
                 .unsubscribe(DataType.TYPE_STEP_COUNT_DELTA)
                 .addOnSuccessListener(unused -> {
-                            Log.i(TAG,"Successfully unsubscribed.");
+                            Log.i(TAG, "Successfully unsubscribed.");
                             if (isfinished) {
                                 getSessionResult();
                             }
                         }
-                        )
+                )
                 .addOnFailureListener(e -> {
                     Log.w(TAG, "Failed to unsubscribe.");
                     // Retry the unsubscribe request.
@@ -374,7 +377,7 @@ public class RunFragment extends Fragment implements OnMapReadyCallback,
                     }
                 })
                 .addOnFailureListener(e ->
-                        Log.w(TAG,"Failed to read session", e));
+                        Log.w(TAG, "Failed to read session", e));
     }
 
     //  Start Running
@@ -386,6 +389,7 @@ public class RunFragment extends Fragment implements OnMapReadyCallback,
         firstStartTime = System.currentTimeMillis();
         setFitness();
         runningContinue();
+        isRunningCont = true;
         // TODO initiate user data here?
     }
 
@@ -396,6 +400,13 @@ public class RunFragment extends Fragment implements OnMapReadyCallback,
         requestingLocationUpdates = true;
         isStartRunning = true;
         timerHandler.postDelayed(timerRunnable, 0);
+        Float color;
+        if(!isRunningCont) {
+            color = BitmapDescriptorFactory.HUE_VIOLET;
+        }
+        else{
+            color = BitmapDescriptorFactory.HUE_RED;
+        }
         fusedLocationProviderClient
                 .getCurrentLocation(PRIORITY_HIGH_ACCURACY, cancellationToken)
                 .addOnCompleteListener(requireActivity(), task -> {
@@ -404,7 +415,7 @@ public class RunFragment extends Fragment implements OnMapReadyCallback,
                         LatLng startLatLng = new LatLng(lastKnownLocation.getLatitude(), lastKnownLocation.getLongitude());
                         startOptions = new MarkerOptions().position(startLatLng)
                                 // TODO Some icon changes here?
-                                .icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_VIOLET))
+                                .icon(BitmapDescriptorFactory.defaultMarker(color))
                                 // TODO Maybe some "Check Points" here?
                                 .title("Starting Point");
                         map.addMarker(startOptions);
@@ -422,6 +433,13 @@ public class RunFragment extends Fragment implements OnMapReadyCallback,
         requestingLocationUpdates = false;
         isStartRunning = false;
         timerHandler.removeCallbacks(timerRunnable);
+        Float color;
+        if(!isRunningEnd) {
+            color = BitmapDescriptorFactory.HUE_RED;
+        }
+        else{
+             color = BitmapDescriptorFactory.HUE_BLUE;
+        }
         fusedLocationProviderClient
                 .getCurrentLocation(PRIORITY_HIGH_ACCURACY, cancellationToken)
                 .addOnCompleteListener(requireActivity(), task -> {
@@ -429,7 +447,7 @@ public class RunFragment extends Fragment implements OnMapReadyCallback,
                         lastKnownLocation = task.getResult();
                         LatLng startLatLng = new LatLng(lastKnownLocation.getLatitude(), lastKnownLocation.getLongitude());
                         endOptions = new MarkerOptions().position(startLatLng)
-                                .icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_BLUE))
+                                .icon(BitmapDescriptorFactory.defaultMarker(color))
                                 .title("End Point");
                         map.addMarker(endOptions);
                         stopLocationUpdates();
@@ -442,6 +460,7 @@ public class RunFragment extends Fragment implements OnMapReadyCallback,
     private void runningStop() {
         getLocation(false);
         lastStopTime = System.currentTimeMillis();
+        isRunningEnd = true;
         runningPause();
         removeFitListener();
         writeToDatabase();
@@ -459,7 +478,7 @@ public class RunFragment extends Fragment implements OnMapReadyCallback,
         data.setEndTime(new Timestamp(lastStopTime));
         data.setTotalTime(totalTime);
         data.setStartLocation(locationList.get(0));
-        data.setEndLocation(locationList.get(locationList.size()-1));
+        data.setEndLocation(locationList.get(locationList.size() - 1));
         FitEvent event = new FitEvent(data);
         data.writeToDatabase();
         event.writeToDatabase();
@@ -470,6 +489,7 @@ public class RunFragment extends Fragment implements OnMapReadyCallback,
         startBtn = binding.timeStart;
         pauseBtn = binding.timePause;
         stopBtn = binding.timeStop;
+        share = binding.share;
         startBtn.setOnClickListener(view -> {
             if (!isStartRunning) {
                 if (firstRun) runningStart();
@@ -481,6 +501,9 @@ public class RunFragment extends Fragment implements OnMapReadyCallback,
         });
         stopBtn.setOnClickListener(view -> {
             if (isStartRunning) runningStop();
+        });
+        share.setOnClickListener(view -> {
+            ShotShareUtil.shotShare(requireContext());
         });
     }
 
@@ -694,4 +717,5 @@ public class RunFragment extends Fragment implements OnMapReadyCallback,
         Toast.makeText(getContext(), "Current location:\n" + location, Toast.LENGTH_LONG)
                 .show();
     }
+
 }
