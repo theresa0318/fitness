@@ -7,6 +7,8 @@ import android.Manifest;
 import android.annotation.SuppressLint;
 import android.content.pm.PackageManager;
 import android.graphics.Color;
+import android.location.Address;
+import android.location.Geocoder;
 import android.location.Location;
 import android.os.Build;
 import android.os.Bundle;
@@ -69,9 +71,11 @@ import com.google.android.gms.tasks.CancellationToken;
 import com.google.android.gms.tasks.OnTokenCanceledListener;
 import com.google.android.gms.tasks.Task;
 
+import java.io.IOException;
 import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 import java.util.OptionalDouble;
 import java.util.concurrent.TimeUnit;
 
@@ -91,6 +95,9 @@ public class RunFragment extends Fragment implements OnMapReadyCallback,
     private Runnable timerRunnable;
     private RunViewModel model;
     private ImageButton share;
+    private TextView textLength;
+    private TextView startPos;
+    private TextView endPos;
 
     private MarkerOptions startOptions;
     private MarkerOptions endOptions;
@@ -477,17 +484,24 @@ public class RunFragment extends Fragment implements OnMapReadyCallback,
     }
 
     //  Stop Running
-    private void runningStop() {
+    private void runningStop() throws IOException {
         getLocation(false);
         lastStopTime = System.currentTimeMillis();
         isRunningEnd = true;
         runningPause();
         removeFitListener();
         writeToDatabase();
+
+        //update activity result content
+        updateActResult();
+
+        //reset all attributes
         isRunningCont = false;
         isRunningEnd = false;
         firstRun = true;
         secondRun = true;
+        distances.removeAll(distances);
+        speeds.removeAll(speeds);
     }
 
     private void writeToDatabase() {
@@ -508,6 +522,28 @@ public class RunFragment extends Fragment implements OnMapReadyCallback,
         event.writeToDatabase();
     }
 
+    private void updateActResult() throws IOException {
+        Geocoder geocoder;
+        List<Address> addresses;
+        geocoder = new Geocoder(requireContext(), Locale.getDefault());
+
+        addresses = geocoder.getFromLocation(locationList.get(0).getLatitude(),locationList.get(0).getLongitude(),1);
+        startPos = getView().findViewById(R.id.startPosition);
+        startPos.setText(addresses.get(0).getAddressLine(0));
+
+        addresses.removeAll(addresses);
+        addresses = geocoder.getFromLocation(locationList.get(locationList.size()-1).getLatitude(),locationList.get(locationList.size()-1).getLongitude(),1);
+        endPos = getView().findViewById(R.id.destination);
+        endPos.setText(addresses.get(0).getAddressLine(0));
+
+        // TODO distance 可能要判断一下 小于1km用m代替类似history
+        int totalDistance = (int) distances.stream().mapToLong(distance -> distance).sum();
+        textLength = getView().findViewById(R.id.length);
+        textLength.setText(totalDistance);
+
+        // TODO Ranks left
+    }
+
     private void setBtnListeners() {
         // TODO simplify codes here
         startBtn = binding.timeStart;
@@ -524,7 +560,13 @@ public class RunFragment extends Fragment implements OnMapReadyCallback,
             if (isStartRunning) runningPause();
         });
         stopBtn.setOnClickListener(view -> {
-            if (isStartRunning) runningStop();
+            if (isStartRunning) {
+                try {
+                    runningStop();
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            }
         });
         share.setOnClickListener(view -> {
             ShotShareUtil.shotShare(requireContext());
