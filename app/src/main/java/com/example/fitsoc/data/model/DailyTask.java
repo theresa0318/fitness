@@ -46,8 +46,27 @@ public class DailyTask {
                         Log.d(TAG, "Error getting documents: ", task.getException());
                     }
                 });
+    }
 
+    public FitTask findDistanceTask() {
+        for (FitTask task : todayTasks) {
+            if(task.type.equals("distance")) return task;
+        }
+        return null;
+    }
 
+    public FitTask findTimeTask() {
+        for (FitTask task : todayTasks) {
+            if(task.type.equals("time")) return task;
+        }
+        return null;
+    }
+
+    public FitTask findTargetTask() {
+        for (FitTask task : todayTasks) {
+            if(task.type.equals("target")) return task;
+        }
+        return null;
     }
 
     public FitTask getHardTask() {

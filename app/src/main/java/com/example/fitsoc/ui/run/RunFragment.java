@@ -38,6 +38,9 @@ import com.example.fitsoc.R;
 import com.example.fitsoc.data.FitEvent;
 import com.example.fitsoc.data.RandomTarget;
 import com.example.fitsoc.data.RunningData;
+import com.example.fitsoc.data.model.DailyTask;
+import com.example.fitsoc.data.model.FitTask;
+import com.example.fitsoc.data.model.TaskList;
 import com.example.fitsoc.databinding.FragmentRunBinding;
 import com.google.android.gms.auth.api.signin.GoogleSignIn;
 import com.google.android.gms.auth.api.signin.GoogleSignInAccount;
@@ -75,12 +78,17 @@ import com.google.android.gms.tasks.CancellationToken;
 import com.google.android.gms.tasks.OnTokenCanceledListener;
 import com.google.android.gms.tasks.Task;
 import com.google.android.material.snackbar.Snackbar;
+import com.google.firebase.firestore.FirebaseFirestore;
+import com.google.firebase.firestore.QueryDocumentSnapshot;
 
 import java.io.IOException;
 import java.sql.Timestamp;
 import java.util.ArrayList;
+import java.util.Calendar;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 import java.util.OptionalDouble;
 import java.util.concurrent.TimeUnit;
 
@@ -135,6 +143,12 @@ public class RunFragment extends Fragment implements OnMapReadyCallback,
     private FitnessOptions fitnessOptions;
     private GoogleSignInAccount account;
     private Session session;
+
+    private DailyTask dailyTask;
+    private FitTask targetTask;
+    private FitTask distanceTask;
+    private FitTask timeTask;
+    private RandomTarget target;
 
     private boolean isStartRunning = false;
     private boolean firstRun = true;//this is for run before stop
@@ -466,7 +480,7 @@ public class RunFragment extends Fragment implements OnMapReadyCallback,
         requestingLocationUpdates = false;
         isStartRunning = false;
         timerHandler.removeCallbacks(timerRunnable);
-        Float color;
+        float color;
         if(!isRunningEnd) {
             color = BitmapDescriptorFactory.HUE_RED;
         }
@@ -516,6 +530,16 @@ public class RunFragment extends Fragment implements OnMapReadyCallback,
         Toast.makeText(requireContext(), "Distance: " + totalDistance, Toast.LENGTH_SHORT).show();
         OptionalDouble avgSpeed = speeds.stream().mapToLong(speed -> speed).average();
         Toast.makeText(requireContext(), "Speed: " + avgSpeed.getAsDouble(), Toast.LENGTH_SHORT).show();
+        if (distanceTask.isAccepted && !distanceTask.isCompleted) {
+            if (totalDistance >= distanceTask.value) {
+                distanceTask.isCompleted = true;
+            }
+        }
+        if (timeTask.isAccepted && !distanceTask.isCompleted) {
+            if (totalTime >= timeTask.value) {
+                timeTask.isCompleted = true;
+            }
+        }
         RunningData data = new RunningData();
         data.setDistance(totalDistance);
         data.setSpeedAVG((long) avgSpeed.getAsDouble());
@@ -527,26 +551,33 @@ public class RunFragment extends Fragment implements OnMapReadyCallback,
         FitEvent event = new FitEvent(data);
         data.writeToDatabase();
         event.writeToDatabase();
+        dailyTask.writeToDatabase();
     }
 
+    @SuppressLint("SetTextI18n")
     private void updateActResult() throws IOException {
         Geocoder geocoder;
         List<Address> addresses;
         geocoder = new Geocoder(requireContext(), Locale.getDefault());
 
         addresses = geocoder.getFromLocation(locationList.get(0).getLatitude(),locationList.get(0).getLongitude(),1);
-        startPos = getView().findViewById(R.id.startPosition);
+        startPos = binding.startPosition;
         startPos.setText(addresses.get(0).getAddressLine(0));
 
         addresses.removeAll(addresses);
         addresses = geocoder.getFromLocation(locationList.get(locationList.size()-1).getLatitude(),locationList.get(locationList.size()-1).getLongitude(),1);
-        endPos = getView().findViewById(R.id.destination);
+        endPos = binding.destination;
         endPos.setText(addresses.get(0).getAddressLine(0));
 
         // TODO distance 可能要判断一下 小于1km用m代替类似history
-        int totalDistance = (int) distances.stream().mapToLong(distance -> distance).sum();
-        textLength = getView().findViewById(R.id.length);
-        textLength.setText(totalDistance);
+        textLength = binding.length;
+        long totalDistance = distances.stream().mapToLong(distance -> distance).sum();
+        if (totalDistance > 1000) {
+            totalDistance /= 1000;
+            textLength.setText("Distance: " + totalDistance + " KM");
+        } else {
+            textLength.setText("Distance: " + totalDistance + " M");
+        }
 
         // TODO Ranks left
     }
@@ -671,6 +702,11 @@ public class RunFragment extends Fragment implements OnMapReadyCallback,
             for (Location location : locationResult.getLocations()) {
                 Log.d("Location Update: ", location.toString());
                 locationList.add(location);
+                if (targetTask.isAccepted && !targetTask.isCompleted) {
+                    if (target.isAtTargetLocation(location)) {
+                        targetTask.isCompleted = true;
+                    }
+                }
                 LatLng nowLatLng = new LatLng(location.getLatitude(), location.getLongitude());
                 routeOptions.add(nowLatLng);
                 route = map.addPolyline(routeOptions);
@@ -713,9 +749,59 @@ public class RunFragment extends Fragment implements OnMapReadyCallback,
             });
     }
 
+    private String generateDateString() {
+        Calendar now = Calendar.getInstance();
+        int year = now.get(Calendar.YEAR);
+        int month = now.get(Calendar.MONTH) + 1;
+        int day = now.get(Calendar.DAY_OF_MONTH);
+        return year + "-" + month + "-" + day;
+    }
+
+    private void generateDailyTask(Map<String, Object> data) {
+        try {
+            String dateString = (String) data.get("date");
+            String userIDString = (String) data.get("userID");
+            ArrayList<FitTask> fitTasks = new ArrayList<>();
+            if ((HashMap<String, Object>) data.get("simpleTask") != null) {
+                HashMap<String, Object> simpleTaskMap = (HashMap<String, Object>) data.get("simpleTask");
+                String simpleType = (String) simpleTaskMap.get("type");
+                long simpleValue = (long) simpleTaskMap.get("value");
+                long simpleLevel = (long) simpleTaskMap.get("level");
+                boolean simpleIsCompleted = (boolean) simpleTaskMap.get("isCompleted");
+                boolean simpleIsAccepted = (boolean) simpleTaskMap.get("isAccepted");
+                FitTask simpleTask = new FitTask(simpleType, simpleValue, simpleLevel, simpleIsCompleted, simpleIsAccepted);
+                fitTasks.add(simpleTask);
+            }
+            if ((HashMap<String, Object>) data.get("midTask") != null) {
+                HashMap<String, Object> midTaskMap = (HashMap<String, Object>) data.get("midTask");
+                String midType = (String) midTaskMap.get("type");
+                long midValue = (long) midTaskMap.get("value");
+                long midLevel = (long) midTaskMap.get("level");
+                boolean midIsCompleted = (boolean) midTaskMap.get("isCompleted");
+                boolean midIsAccepted = (boolean) midTaskMap.get("isAccepted");
+                FitTask midTask = new FitTask(midType, midValue, midLevel, midIsCompleted, midIsAccepted);
+                fitTasks.add(midTask);
+            }
+            if ((HashMap<String, Object>) data.get("hardTask") != null) {
+                HashMap<String, Object> hardTaskMap = (HashMap<String, Object>) data.get("hardTask");
+                String hardType = (String) hardTaskMap.get("type");
+                long hardValue = (long) hardTaskMap.get("value");
+                long hardLevel = (long) hardTaskMap.get("level");
+                boolean hardIsCompleted = (boolean) hardTaskMap.get("isCompleted");
+                boolean hardIsAccepted = (boolean) hardTaskMap.get("isAccepted");
+                FitTask hardTask = new FitTask(hardType, hardValue, hardLevel, hardIsCompleted,hardIsAccepted);
+                fitTasks.add(hardTask);
+            }
+            dailyTask = new DailyTask(fitTasks, dateString, userIDString);
+        } catch (NullPointerException e) {
+            Log.d("Error: ", e.getMessage());
+        }
+
+    }
+
     private void showTask(Location location) {
         AlertDialog.Builder builder = new AlertDialog.Builder(requireActivity());
-        builder.setMessage("Your Target Today!")
+        builder.setMessage("Your Target Point Today!")
                 .setTitle("Task");
         builder.setPositiveButton("Get It!", new DialogInterface.OnClickListener() {
             public void onClick(DialogInterface dialog, int id) {
@@ -736,25 +822,71 @@ public class RunFragment extends Fragment implements OnMapReadyCallback,
             }
         });
         AlertDialog dialog = builder.create();
-        RandomTarget target = new RandomTarget(location, 500);
-        Location targetLocation = target.getTargetLocation();
-        target.calculateDistance(location);
-        LatLng targetLatLng = new LatLng(targetLocation.getLatitude(), targetLocation.getLongitude());
-        MarkerOptions targetOption  = new MarkerOptions().position(targetLatLng)
-                .icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_VIOLET))
-                .title("Target!");
-        map.addMarker(targetOption);
-        map.animateCamera(CameraUpdateFactory.newLatLngZoom(
-                targetLatLng, DEFAULT_ZOOM), 700, new GoogleMap.CancelableCallback() {
-            @Override
-            public void onFinish() {
-                dialog.show();
-            }
-            @Override
-            public void onCancel() {
+        FirebaseFirestore db = FirebaseFirestore.getInstance();
+        String userID = "rua";
+        db.collection("dailyTasks")
+                .whereEqualTo("userID", userID)
+                .whereEqualTo("date", generateDateString())
+                .get()
+                .addOnCompleteListener(task -> {
+                    if (task.isSuccessful()) {
+                        if (task.getResult().isEmpty()) {
+                            Log.d("TAG", "Getting empty documents: ");
+                            LatLng nowLatLng = new LatLng(lastKnownLocation.getLatitude(), lastKnownLocation.getLongitude());
+                            map.animateCamera(CameraUpdateFactory.newLatLngZoom(
+                                    nowLatLng, DEFAULT_ZOOM), 700, new GoogleMap.CancelableCallback() {
+                                @Override
+                                public void onFinish() {
 
-            }
-        });
+                                }
+
+                                @Override
+                                public void onCancel() {
+
+                                }
+                            });
+                        } else {
+                            for (QueryDocumentSnapshot document : task.getResult()) {
+                                Log.d("TAG", document.getId() + " => " + document.getData());
+                                Map<String, Object> data = document.getData();
+                                generateDailyTask(data);
+
+
+
+                                int radius;
+                                boolean hasTargetTask = false;
+                                targetTask = dailyTask.findTargetTask();
+                                distanceTask = dailyTask.findDistanceTask();
+                                timeTask = dailyTask.findTimeTask();
+
+                                if (targetTask.isAccepted && !targetTask.isCompleted) {
+                                    radius = targetTask.value;
+                                    target = new RandomTarget(location, radius);
+                                    Location targetLocation = target.getTargetLocation();
+                                    target.calculateDistance(location);
+                                    LatLng targetLatLng = new LatLng(targetLocation.getLatitude(), targetLocation.getLongitude());
+                                    MarkerOptions targetOption  = new MarkerOptions().position(targetLatLng)
+                                            .icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_VIOLET))
+                                            .title("Target!");
+                                    map.addMarker(targetOption);
+                                    map.animateCamera(CameraUpdateFactory.newLatLngZoom(
+                                            targetLatLng, DEFAULT_ZOOM), 700, new GoogleMap.CancelableCallback() {
+                                        @Override
+                                        public void onFinish() {
+                                            dialog.show();
+                                        }
+                                        @Override
+                                        public void onCancel() {
+
+                                        }
+                                    });
+                                }
+                            }
+                        }
+                    } else {
+                        Log.d("TAG", "Error getting documents: ", task.getException());
+                    }
+                });
     }
 
     private CancellationToken cancellationToken = new CancellationToken() {
@@ -795,8 +927,6 @@ public class RunFragment extends Fragment implements OnMapReadyCallback,
     public void onMapReady(@NonNull GoogleMap mMap) {
         map = mMap;
         updateLocationUI();
-//        map.setMyLocationEnabled(true);
-//        map.getUiSettings().setMyLocationButtonEnabled(true);
         map.setOnMyLocationButtonClickListener(this);
         map.setOnMyLocationClickListener(this);
     }
