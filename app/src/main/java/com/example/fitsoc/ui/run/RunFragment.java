@@ -8,6 +8,8 @@ import android.annotation.SuppressLint;
 import android.content.DialogInterface;
 import android.content.pm.PackageManager;
 import android.graphics.Color;
+import android.location.Address;
+import android.location.Geocoder;
 import android.location.Location;
 import android.os.Build;
 import android.os.Bundle;
@@ -74,9 +76,11 @@ import com.google.android.gms.tasks.OnTokenCanceledListener;
 import com.google.android.gms.tasks.Task;
 import com.google.android.material.snackbar.Snackbar;
 
+import java.io.IOException;
 import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 import java.util.OptionalDouble;
 import java.util.concurrent.TimeUnit;
 
@@ -97,6 +101,9 @@ public class RunFragment extends Fragment implements OnMapReadyCallback,
     private Runnable timerRunnable;
     private RunViewModel model;
     private ImageButton share;
+    private TextView textLength;
+    private TextView startPos;
+    private TextView endPos;
 
     private MarkerOptions startOptions;
     private MarkerOptions endOptions;
@@ -114,6 +121,8 @@ public class RunFragment extends Fragment implements OnMapReadyCallback,
     private long totalTime;
     private ArrayList<Long> distances = new ArrayList<>();
     private ArrayList<Long> speeds = new ArrayList<>();
+    private ArrayList<Marker> markers = new ArrayList<>();
+    private ArrayList<Polyline> routes = new ArrayList<>();
 
     private FusedLocationProviderClient fusedLocationProviderClient;
     private LocationSettingsRequest.Builder builder;
@@ -128,12 +137,13 @@ public class RunFragment extends Fragment implements OnMapReadyCallback,
     private Session session;
 
     private boolean isStartRunning = false;
-    private boolean firstRun = true;
+    private boolean firstRun = true;//this is for run before stop
     private boolean requestingLocationUpdates = false;
     private boolean locationPermissionGranted = false;
     private boolean recognitionPermissionGranted = false;
     private boolean isRunningEnd = false;
     private boolean isRunningCont = false;
+    private boolean secondRun = false;//this is for another round run after stop
 
     private final Handler timerHandler = new Handler();
 
@@ -389,6 +399,21 @@ public class RunFragment extends Fragment implements OnMapReadyCallback,
 
     //  Start Running
     private void runningStart() {
+        //reset timer
+        if(secondRun) {
+            //remove all previous run markers
+            for(Marker marker:markers){
+                marker.remove();
+            }
+            //remove all previous run routes
+            for(Polyline route:routes){
+                route.remove();
+            }
+            totalTime = 0;
+            startTime = System.currentTimeMillis();
+            setTimer();
+        }
+
         createLocationRequest();
         getLocation(true);
         firstRun = false;
@@ -425,7 +450,8 @@ public class RunFragment extends Fragment implements OnMapReadyCallback,
                                 .icon(BitmapDescriptorFactory.defaultMarker(color))
                                 // TODO Maybe some "Check Points" here?
                                 .title("Starting Point");
-                        map.addMarker(startOptions);
+                        Marker marker = map.addMarker(startOptions);
+                        markers.add(marker);
                         routeOptions = new PolylineOptions().width(15).color(Color.parseColor("#61BF99"));
                         startLocationUpdates();
 //                        startSession();
@@ -456,7 +482,8 @@ public class RunFragment extends Fragment implements OnMapReadyCallback,
                         endOptions = new MarkerOptions().position(startLatLng)
                                 .icon(BitmapDescriptorFactory.defaultMarker(color))
                                 .title("End Point");
-                        map.addMarker(endOptions);
+                        Marker marker = map.addMarker(endOptions);
+                        markers.add(marker);
                         stopLocationUpdates();
 //                        stopSession(false);
                     }
@@ -464,13 +491,24 @@ public class RunFragment extends Fragment implements OnMapReadyCallback,
     }
 
     //  Stop Running
-    private void runningStop() {
+    private void runningStop() throws IOException {
         getLocation(false);
         lastStopTime = System.currentTimeMillis();
         isRunningEnd = true;
         runningPause();
         removeFitListener();
         writeToDatabase();
+
+        //update activity result content
+        updateActResult();
+
+        //reset all attributes
+        isRunningCont = false;
+        isRunningEnd = false;
+        firstRun = true;
+        secondRun = true;
+        distances.removeAll(distances);
+        speeds.removeAll(speeds);
     }
 
     private void writeToDatabase() {
@@ -491,6 +529,28 @@ public class RunFragment extends Fragment implements OnMapReadyCallback,
         event.writeToDatabase();
     }
 
+    private void updateActResult() throws IOException {
+        Geocoder geocoder;
+        List<Address> addresses;
+        geocoder = new Geocoder(requireContext(), Locale.getDefault());
+
+        addresses = geocoder.getFromLocation(locationList.get(0).getLatitude(),locationList.get(0).getLongitude(),1);
+        startPos = getView().findViewById(R.id.startPosition);
+        startPos.setText(addresses.get(0).getAddressLine(0));
+
+        addresses.removeAll(addresses);
+        addresses = geocoder.getFromLocation(locationList.get(locationList.size()-1).getLatitude(),locationList.get(locationList.size()-1).getLongitude(),1);
+        endPos = getView().findViewById(R.id.destination);
+        endPos.setText(addresses.get(0).getAddressLine(0));
+
+        // TODO distance 可能要判断一下 小于1km用m代替类似history
+        int totalDistance = (int) distances.stream().mapToLong(distance -> distance).sum();
+        textLength = getView().findViewById(R.id.length);
+        textLength.setText(totalDistance);
+
+        // TODO Ranks left
+    }
+
     private void setBtnListeners() {
         // TODO simplify codes here
         startBtn = binding.timeStart;
@@ -507,7 +567,13 @@ public class RunFragment extends Fragment implements OnMapReadyCallback,
             if (isStartRunning) runningPause();
         });
         stopBtn.setOnClickListener(view -> {
-            if (isStartRunning) runningStop();
+            if (isStartRunning) {
+                try {
+                    runningStop();
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            }
         });
         share.setOnClickListener(view -> {
             ShotShareUtil.shotShare(requireContext());
@@ -608,6 +674,7 @@ public class RunFragment extends Fragment implements OnMapReadyCallback,
                 LatLng nowLatLng = new LatLng(location.getLatitude(), location.getLongitude());
                 routeOptions.add(nowLatLng);
                 route = map.addPolyline(routeOptions);
+                routes.add(route);
                 map.animateCamera(CameraUpdateFactory.newLatLngZoom(
                         nowLatLng, DEFAULT_ZOOM));
             }

@@ -108,16 +108,16 @@
                 android:layout_marginTop="50dp"
                 android:textSize="24sp"
                 android:paddingLeft="20dp"
-                android:text="Start: Carlton (或者经纬度)"/>
+                android:text="Start: null"/>
 
             <TextView
-                android:id="@+id/desitination"
+                android:id="@+id/destination"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
                 android:textSize="24sp"
                 android:paddingLeft="20dp"
-                android:text="Destination: CBD (或者经纬度)"/>
+                android:text="Destination: null"/>
 
             <TextView
                 android:id="@+id/length"
@@ -126,7 +126,7 @@
                 android:layout_weight="1"
                 android:textSize="24sp"
                 android:paddingLeft="20dp"
-                android:text="Distance: 1 km"/>
+                android:text="Distance: 0 km"/>
 
             <TextView
                 android:id="@+id/rank"
