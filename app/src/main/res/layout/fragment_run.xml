@@ -18,20 +18,25 @@
     tools:context=".ui.run.RunFragment">
 
     <!-- MAIN CONTENT -->
-    <FrameLayout
+    <androidx.coordinatorlayout.widget.CoordinatorLayout
+        android:id="@+id/coordinator_layout"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:orientation="vertical">
+
         <androidx.appcompat.widget.Toolbar
             android:id="@+id/main_toolbar"
+            android:layout_width="match_parent"
             android:layout_height="?attr/actionBarSize"
             android:background="?attr/colorPrimary"
-            sothree:theme="@style/ActionBar"
-            android:layout_width="match_parent"/>
-        <com.google.android.gms.maps.MapView android:id="@+id/mapview"
+            sothree:theme="@style/ActionBar" />
+
+        <com.google.android.gms.maps.MapView
+            android:id="@+id/mapview"
             android:layout_width="fill_parent"
-            android:layout_height="fill_parent" />
-    </FrameLayout>
+            android:layout_height="match_parent"></com.google.android.gms.maps.MapView>
+
+    </androidx.coordinatorlayout.widget.CoordinatorLayout>
 
     <!-- SLIDING LAYOUT -->
     <LinearLayout

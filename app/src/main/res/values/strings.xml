@@ -28,7 +28,7 @@
     <string name="action_age_short">Age</string>
     <string name="action_height_short">Height</string>
     <string name="action_weight_short">Weight</string>
-    <string name="settings_save">Save</string>
+    <string name="settings_save">Accept</string>
 
     <string name="menu_run">Run</string>
     <string name="menu_community">Community</string>

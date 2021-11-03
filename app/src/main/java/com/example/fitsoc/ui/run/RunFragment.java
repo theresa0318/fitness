@@ -5,6 +5,7 @@ import static com.google.android.gms.location.LocationRequest.PRIORITY_HIGH_ACCU
 
 import android.Manifest;
 import android.annotation.SuppressLint;
+import android.content.DialogInterface;
 import android.content.pm.PackageManager;
 import android.graphics.Color;
 import android.location.Location;
@@ -25,12 +26,15 @@ import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.annotation.RequiresApi;
+import androidx.appcompat.app.AlertDialog;
 import androidx.core.content.ContextCompat;
 import androidx.fragment.app.Fragment;
+import androidx.fragment.app.FragmentManager;
 import androidx.lifecycle.ViewModelProvider;
 
 import com.example.fitsoc.R;
 import com.example.fitsoc.data.FitEvent;
+import com.example.fitsoc.data.RandomTarget;
 import com.example.fitsoc.data.RunningData;
 import com.example.fitsoc.databinding.FragmentRunBinding;
 import com.google.android.gms.auth.api.signin.GoogleSignIn;
@@ -68,6 +72,7 @@ import com.google.android.gms.maps.model.PolylineOptions;
 import com.google.android.gms.tasks.CancellationToken;
 import com.google.android.gms.tasks.OnTokenCanceledListener;
 import com.google.android.gms.tasks.Task;
+import com.google.android.material.snackbar.Snackbar;
 
 import java.sql.Timestamp;
 import java.util.ArrayList;
@@ -87,6 +92,7 @@ public class RunFragment extends Fragment implements OnMapReadyCallback,
     private ImageButton startBtn;
     private ImageButton pauseBtn;
     private ImageButton stopBtn;
+    private Snackbar mySnackbar;
     private FragmentRunBinding binding;
     private Runnable timerRunnable;
     private RunViewModel model;
@@ -147,11 +153,12 @@ public class RunFragment extends Fragment implements OnMapReadyCallback,
         inflater.inflate(R.layout.fragment_run, container, false);
         binding = FragmentRunBinding.inflate(inflater, container, false);
         View run = binding.getRoot();
+//        mySnackbar = Snackbar.make(binding.coordinatorLayout, "Snack Bar?????????????????????????????????????????????????????", 10000);
         setBtnListeners();
         setTimer();
         initiateFitness();
 
-        mapView = (MapView) run.findViewById(R.id.mapview);
+        mapView = run.findViewById(R.id.mapview);
         mapView.onCreate(savedInstanceState);
         mapView.getMapAsync(this);
         return run;
@@ -542,10 +549,12 @@ public class RunFragment extends Fragment implements OnMapReadyCallback,
             //  TODO some operations here?
             //  if already permitted, set flag -> true
             locationPermissionGranted = true;
+            Log.d("Get Permission: ", "Permission obtained!");
         } else {
             //  TODO some operations here?
             //  if not permitted, require the permission
             requireLocationPermission();
+            Log.d("Get Permission: ", "Permission required!");
         }
     }
 
@@ -627,15 +636,58 @@ public class RunFragment extends Fragment implements OnMapReadyCallback,
             .addOnCompleteListener(requireActivity(), task -> {
                 if (task.isSuccessful()) {
                     lastKnownLocation = task.getResult();
-                    LatLng nowLatLng = new LatLng(lastKnownLocation.getLatitude(), lastKnownLocation.getLongitude());
-                    map.animateCamera(CameraUpdateFactory.newLatLngZoom(
-                            nowLatLng, DEFAULT_ZOOM));
+                    showTask(lastKnownLocation);
+
                 } else {
                     lastKnownLocation = null;
                     map.animateCamera(CameraUpdateFactory.newLatLngZoom(
                             melbourne, DEFAULT_ZOOM));
                 }
             });
+    }
+
+    private void showTask(Location location) {
+        AlertDialog.Builder builder = new AlertDialog.Builder(requireActivity());
+        builder.setMessage("Your Target Today!")
+                .setTitle("Task");
+        builder.setPositiveButton("Get It!", new DialogInterface.OnClickListener() {
+            public void onClick(DialogInterface dialog, int id) {
+                // User clicked OK button
+                LatLng nowLatLng = new LatLng(lastKnownLocation.getLatitude(), lastKnownLocation.getLongitude());
+                map.animateCamera(CameraUpdateFactory.newLatLngZoom(
+                        nowLatLng, DEFAULT_ZOOM), 700, new GoogleMap.CancelableCallback() {
+                    @Override
+                    public void onFinish() {
+
+                    }
+
+                    @Override
+                    public void onCancel() {
+
+                    }
+                });
+            }
+        });
+        AlertDialog dialog = builder.create();
+        RandomTarget target = new RandomTarget(location, 500);
+        Location targetLocation = target.getTargetLocation();
+        target.calculateDistance(location);
+        LatLng targetLatLng = new LatLng(targetLocation.getLatitude(), targetLocation.getLongitude());
+        MarkerOptions targetOption  = new MarkerOptions().position(targetLatLng)
+                .icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_VIOLET))
+                .title("Target!");
+        map.addMarker(targetOption);
+        map.animateCamera(CameraUpdateFactory.newLatLngZoom(
+                targetLatLng, DEFAULT_ZOOM), 700, new GoogleMap.CancelableCallback() {
+            @Override
+            public void onFinish() {
+                dialog.show();
+            }
+            @Override
+            public void onCancel() {
+
+            }
+        });
     }
 
     private CancellationToken cancellationToken = new CancellationToken() {
@@ -675,10 +727,9 @@ public class RunFragment extends Fragment implements OnMapReadyCallback,
     @Override
     public void onMapReady(@NonNull GoogleMap mMap) {
         map = mMap;
-        initiateLocation();
         updateLocationUI();
-        map.setMyLocationEnabled(true);
-        map.getUiSettings().setMyLocationButtonEnabled(true);
+//        map.setMyLocationEnabled(true);
+//        map.getUiSettings().setMyLocationButtonEnabled(true);
         map.setOnMyLocationButtonClickListener(this);
         map.setOnMyLocationClickListener(this);
     }
@@ -688,18 +739,23 @@ public class RunFragment extends Fragment implements OnMapReadyCallback,
         if (map == null) {
             return;
         }
-        try {
-            if (locationPermissionGranted) {
-                map.setMyLocationEnabled(true);
-                map.getUiSettings().setMyLocationButtonEnabled(true);
-            } else {
-                map.setMyLocationEnabled(false);
-                map.getUiSettings().setMyLocationButtonEnabled(false);
-                lastKnownLocation = null;
-                getLocationPermission();
+        boolean loopMark = true;
+        while (loopMark) {
+            try {
+                if (locationPermissionGranted) {
+                    map.setMyLocationEnabled(true);
+                    map.getUiSettings().setMyLocationButtonEnabled(true);
+                    initiateLocation();
+                    loopMark = false;
+                } else {
+                    map.setMyLocationEnabled(false);
+                    map.getUiSettings().setMyLocationButtonEnabled(false);
+                    lastKnownLocation = null;
+                    getLocationPermission();
+                }
+            } catch (SecurityException e)  {
+                Log.e("Exception: %s", e.getMessage());
             }
-        } catch (SecurityException e)  {
-            Log.e("Exception: %s", e.getMessage());
         }
     }
 
