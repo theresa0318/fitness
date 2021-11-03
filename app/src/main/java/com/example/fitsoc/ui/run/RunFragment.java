@@ -108,6 +108,8 @@ public class RunFragment extends Fragment implements OnMapReadyCallback,
     private long totalTime;
     private ArrayList<Long> distances = new ArrayList<>();
     private ArrayList<Long> speeds = new ArrayList<>();
+    private ArrayList<Marker> markers = new ArrayList<>();
+    private ArrayList<Polyline> routes = new ArrayList<>();
 
     private FusedLocationProviderClient fusedLocationProviderClient;
     private LocationSettingsRequest.Builder builder;
@@ -122,12 +124,13 @@ public class RunFragment extends Fragment implements OnMapReadyCallback,
     private Session session;
 
     private boolean isStartRunning = false;
-    private boolean firstRun = true;
+    private boolean firstRun = true;//this is for run before stop
     private boolean requestingLocationUpdates = false;
     private boolean locationPermissionGranted = false;
     private boolean recognitionPermissionGranted = false;
     private boolean isRunningEnd = false;
     private boolean isRunningCont = false;
+    private boolean secondRun = false;//this is for another round run after stop
 
     private final Handler timerHandler = new Handler();
 
@@ -382,6 +385,21 @@ public class RunFragment extends Fragment implements OnMapReadyCallback,
 
     //  Start Running
     private void runningStart() {
+        //reset timer
+        if(secondRun) {
+            //remove all previous run markers
+            for(Marker marker:markers){
+                marker.remove();
+            }
+            //remove all previous run routes
+            for(Polyline route:routes){
+                route.remove();
+            }
+            totalTime = 0;
+            startTime = System.currentTimeMillis();
+            setTimer();
+        }
+
         createLocationRequest();
         getLocation(true);
         firstRun = false;
@@ -418,7 +436,8 @@ public class RunFragment extends Fragment implements OnMapReadyCallback,
                                 .icon(BitmapDescriptorFactory.defaultMarker(color))
                                 // TODO Maybe some "Check Points" here?
                                 .title("Starting Point");
-                        map.addMarker(startOptions);
+                        Marker marker = map.addMarker(startOptions);
+                        markers.add(marker);
                         routeOptions = new PolylineOptions().width(15).color(Color.parseColor("#61BF99"));
                         startLocationUpdates();
 //                        startSession();
@@ -449,7 +468,8 @@ public class RunFragment extends Fragment implements OnMapReadyCallback,
                         endOptions = new MarkerOptions().position(startLatLng)
                                 .icon(BitmapDescriptorFactory.defaultMarker(color))
                                 .title("End Point");
-                        map.addMarker(endOptions);
+                        Marker marker = map.addMarker(endOptions);
+                        markers.add(marker);
                         stopLocationUpdates();
 //                        stopSession(false);
                     }
@@ -464,6 +484,10 @@ public class RunFragment extends Fragment implements OnMapReadyCallback,
         runningPause();
         removeFitListener();
         writeToDatabase();
+        isRunningCont = false;
+        isRunningEnd = false;
+        firstRun = true;
+        secondRun = true;
     }
 
     private void writeToDatabase() {
@@ -599,6 +623,7 @@ public class RunFragment extends Fragment implements OnMapReadyCallback,
                 LatLng nowLatLng = new LatLng(location.getLatitude(), location.getLongitude());
                 routeOptions.add(nowLatLng);
                 route = map.addPolyline(routeOptions);
+                routes.add(route);
                 map.animateCamera(CameraUpdateFactory.newLatLngZoom(
                         nowLatLng, DEFAULT_ZOOM));
             }
