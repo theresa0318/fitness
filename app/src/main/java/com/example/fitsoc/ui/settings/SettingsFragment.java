@@ -48,6 +48,7 @@ public class SettingsFragment extends Fragment implements View.OnClickListener {
     private String gender="";
     private FirebaseAuth mAuth;
     private FirebaseUser user;
+    private static final int DEFAULT_VALUE = 0;
 
 
     //只完成了radio button的UI部分，将信息录入database的部分待补充
@@ -67,6 +68,8 @@ public class SettingsFragment extends Fragment implements View.OnClickListener {
        weightText = settingView.findViewById(R.id.weight_set);
        Button saveButton = (Button)settingView.findViewById(R.id.settings_save);
        saveButton.setOnClickListener(this);
+
+       newPasswordText.setText("");
 
        mAuth = FirebaseAuth.getInstance();
        user = mAuth.getCurrentUser();
@@ -106,29 +109,39 @@ public class SettingsFragment extends Fragment implements View.OnClickListener {
 
     public void saveSettings() {
 
-        user.updatePassword(String.valueOf(newPasswordText.getText()))
-                .addOnCompleteListener(new OnCompleteListener<Void>() {
-                    @Override
-                    public void onComplete(@NonNull @NotNull Task<Void> task) {
-                        if (task.isSuccessful()) {
-                            Log.d(TAG, "User password updated.");
-                        }
-                        else {
-                            Log.d(TAG, "Fail to update user password.");
-                            Toast.makeText(getActivity(), "Fail to update password!", Toast.LENGTH_SHORT).show();
-                        }
-                    }
-                });
+        if (!String.valueOf(newPasswordText.getText()).equals("")) {
 
+            user.updatePassword(String.valueOf(newPasswordText.getText()))
+                    .addOnCompleteListener(new OnCompleteListener<Void>() {
+                        @Override
+                        public void onComplete(@NonNull @NotNull Task<Void> task) {
+                            if (task.isSuccessful()) {
+                                Log.d(TAG, "User password updated.");
+                            } else {
+                                Log.d(TAG, "Fail to update user password.");
+                                Toast.makeText(getActivity(), "Fail to update password!", Toast.LENGTH_SHORT).show();
+                            }
+                        }
+                    });
+        }
         FirebaseDatabase database = FirebaseDatabase.getInstance();
         //Log.d(TAG, user.getEmail());
         DatabaseReference usersRef = database.getReference().child("users");
         DatabaseReference userRef = usersRef.child(user.getEmail().replace(".", ","));
         Map<String, Object> userUpdates = new HashMap<>();
-        userUpdates.put("gender", gender);
-        userUpdates.put("age", Integer.parseInt(String.valueOf(ageText.getText())));
-        userUpdates.put("height", Integer.parseInt(String.valueOf(heightText.getText())));
-        userUpdates.put("weight", Integer.parseInt(String.valueOf(weightText.getText())));
+        if (!gender.equals("")) {
+            userUpdates.put("gender", gender);
+        }
+        if (!String.valueOf(String.valueOf(ageText.getText())).equals("")) {
+            userUpdates.put("age", Integer.parseInt(String.valueOf(ageText.getText())));
+        }
+        if (!String.valueOf(String.valueOf(heightText.getText())).equals("")) {
+            userUpdates.put("height", Integer.parseInt(String.valueOf(heightText.getText())));
+        }
+        if (!String.valueOf(String.valueOf(weightText.getText())).equals("")) {
+            userUpdates.put("weight", Integer.parseInt(String.valueOf(weightText.getText())));
+        }
+
         userRef.updateChildren(userUpdates,new DatabaseReference.CompletionListener() {
             @Override
             public void onComplete(DatabaseError databaseError, DatabaseReference databaseReference) {
