@@ -37,6 +37,7 @@ import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.Task;
 import com.google.firebase.auth.AuthResult;
 import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.auth.FirebaseUser;
 
 public class LoginActivity extends AppCompatActivity implements View.OnClickListener {
 
@@ -45,6 +46,7 @@ public class LoginActivity extends AppCompatActivity implements View.OnClickList
     private EditText usernameLoginEditText, passwordLoginEditText;
     private Button loginButton;
     private FirebaseAuth mAuth;
+    private FirebaseUser user;
     private ProgressBar loadingProgressBar;
 
     private String userID;
@@ -65,8 +67,8 @@ public class LoginActivity extends AppCompatActivity implements View.OnClickList
             final EditText passwordLoginEditText = binding.passwordLogin;
             usernameLoginEditText.setText(userID);
             passwordLoginEditText.setText(password);
-            Intent intent = new Intent(LoginActivity.this, NavigationActivity.class);
-            startActivity(intent);
+            //Intent intent = new Intent(LoginActivity.this, NavigationActivity.class);
+            //startActivity(intent);
         }
 
         Button button_login_email = (Button) findViewById(R.id.login_email);
@@ -185,6 +187,12 @@ public class LoginActivity extends AppCompatActivity implements View.OnClickList
                         if (task.isSuccessful()) {
                             //store user info into shared preference
                             writeToSharedPref(username,password);
+
+                            Global.setUserID(username);
+                            Global.setPassword(password);
+                            user = mAuth.getCurrentUser();
+                            Global.setUser(user);
+
 
                             // Login success, display a message to the user, then redirect to navigation page.
                             Log.d(TAG, "loginUserWithEmail:success");
