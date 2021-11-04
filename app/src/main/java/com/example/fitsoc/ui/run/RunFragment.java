@@ -114,6 +114,7 @@ public class RunFragment extends Fragment implements OnMapReadyCallback,
     private MarkerOptions endOptions;
     private Marker startMarker;
     private Marker endMarker;
+    private Marker targetMarker;
     private PolylineOptions routeOptions;
     private Polyline route;
 
@@ -725,6 +726,7 @@ public class RunFragment extends Fragment implements OnMapReadyCallback,
                 if (targetTask.isAccepted && !targetTask.isCompleted) {
                     if (target.isAtTargetLocation(location)) {
                         targetTask.isCompleted = true;
+                        targetMarker.remove();
                         Toast.makeText(getContext(), "Reached the target point!", Toast.LENGTH_LONG)
                                 .show();
                     }
@@ -885,9 +887,9 @@ public class RunFragment extends Fragment implements OnMapReadyCallback,
                                     target.calculateDistance(location);
                                     LatLng targetLatLng = new LatLng(targetLocation.getLatitude(), targetLocation.getLongitude());
                                     MarkerOptions targetOption  = new MarkerOptions().position(targetLatLng)
-                                            .icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_VIOLET))
+                                            .icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_ORANGE))
                                             .title("Target!");
-                                    map.addMarker(targetOption);
+                                    targetMarker = map.addMarker(targetOption);
                                     map.animateCamera(CameraUpdateFactory.newLatLngZoom(
                                             targetLatLng, DEFAULT_ZOOM), 700, new GoogleMap.CancelableCallback() {
                                         @Override
