@@ -60,7 +60,7 @@ public class TaskFragment extends Fragment {
                     if (task.isSuccessful()) {
                         if (task.getResult().isEmpty()) {
                             dailyTask = new TaskList().createTodayTasks(userID);
-                            ((Global)this.getActivity().getApplication()).setDailyTask(dailyTask);
+                            Global.setDailyTask(dailyTask);
                         } else {
                             for (QueryDocumentSnapshot document : task.getResult()) {
                                 Log.d("TAG", document.getId() + " => " + document.getData());
@@ -110,8 +110,8 @@ public class TaskFragment extends Fragment {
                 fitTasks.add(hardTask);
             }
             dailyTask = new DailyTask(fitTasks, dateString, userIDString);
-            ((Global)this.getActivity().getApplication()).setDailyTask(dailyTask);
-            DailyTask storedDailyTask = ((Global)this.getActivity().getApplication()).getDailyTask();
+            Global.setDailyTask(dailyTask);
+            DailyTask storedDailyTask = Global.getDailyTask();
             if (storedDailyTask.isTasksAccepted()) {
                 acceptBtn.setEnabled(false);
                 if (storedDailyTask.getMidTask().isAccepted) mediumButton.setChecked(true);
@@ -164,9 +164,10 @@ public class TaskFragment extends Fragment {
             if (hardButton.isChecked()) {
                 dailyTask.getHardTask().isAccepted = true;
             }
-            ((Global)this.getActivity().getApplication()).setDailyTask(dailyTask);
+            Global.setDailyTask(dailyTask);
             dailyTask.writeToDatabase();
             Toast.makeText(requireContext(), "Task Accepted!", Toast.LENGTH_SHORT).show();
+            acceptBtn.setEnabled(false);
         });
 
         dialog.show();
