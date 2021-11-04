@@ -30,6 +30,7 @@ import com.example.fitsoc.NavigationActivity;
 import com.example.fitsoc.R;
 import com.example.fitsoc.databinding.ActivityRegisterBinding;
 import com.example.fitsoc.data.model.RegisteredUser;
+import com.example.fitsoc.ui.Global;
 import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.Task;
 import com.google.firebase.auth.AuthResult;
@@ -184,6 +185,7 @@ public class RegisterActivity extends AppCompatActivity implements OnClickListen
                                 Log.d(TAG, "createUserWithEmail:success");
                                 Toast.makeText(RegisterActivity.this, "Congratulations! You have registered successfully.", Toast.LENGTH_SHORT).show();
                                 loadingProgressBar.setVisibility(GONE);
+                                Global.setUserID(newUser.getUserId());
                                 Intent intent = new Intent(RegisterActivity.this, LoginActivity.class);
                                 startActivity(intent);
                             }
