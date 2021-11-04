@@ -1,6 +1,8 @@
 package com.example.fitsoc.ui.settings;
 
+import android.content.Context;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -24,6 +26,7 @@ import com.example.fitsoc.ui.login.RegisterActivity;
 import com.example.fitsoc.ui.profile.ProfileFragment;
 import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.Task;
+import com.google.firebase.auth.AuthResult;
 import com.google.firebase.auth.EmailAuthCredential;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
@@ -35,6 +38,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.Executor;
 
 import static android.content.ContentValues.TAG;
 import static android.view.View.GONE;
@@ -73,16 +77,17 @@ public class SettingsFragment extends Fragment implements View.OnClickListener {
 
        newPasswordText.setText("");
 
+        //mAuth = FirebaseAuth.getInstance();
 
+       /*
        if (Global.getUserID() == null) {
-           mAuth = FirebaseAuth.getInstance();
-           user = mAuth.getCurrentUser();
+           //user = mAuth.getCurrentUser();
            userID = user.getEmail();
        } else {
            userID = Global.getUserID();
-       }
-
-       return settingView;
+       }*/
+        userID = Global.getUserID();
+        return settingView;
     }
 
 
@@ -118,7 +123,8 @@ public class SettingsFragment extends Fragment implements View.OnClickListener {
     public void saveSettings() {
 
         if (!String.valueOf(newPasswordText.getText()).equals("")) {
-
+            Log.d(TAG, "change password");
+            user = Global.getUser();
             user.updatePassword(String.valueOf(newPasswordText.getText()))
                     .addOnCompleteListener(new OnCompleteListener<Void>() {
                         @Override
@@ -131,9 +137,43 @@ public class SettingsFragment extends Fragment implements View.OnClickListener {
                             }
                         }
                     });
+
+
+            /*
+            mAuth.signInWithEmailAndPassword(userID, Global.getPassword())
+                    .addOnCompleteListener(getActivity(), new OnCompleteListener<AuthResult>() {
+                        @Override
+                        public void onComplete(@NonNull Task<AuthResult> task) {
+                            if (task.isSuccessful()) {
+                                //mAuth = FirebaseAuth.getInstance();
+                                user = mAuth.getCurrentUser();
+                                user.updatePassword(String.valueOf(newPasswordText.getText()))
+                                        .addOnCompleteListener(new OnCompleteListener<Void>() {
+                                            @Override
+                                            public void onComplete(@NonNull @NotNull Task<Void> task) {
+                                                if (task.isSuccessful()) {
+                                                    Log.d(TAG, "User password updated.");
+                                                } else {
+                                                    Log.d(TAG, "Fail to update user password.");
+                                                    Toast.makeText(getActivity(), "Fail to update password!", Toast.LENGTH_SHORT).show();
+                                                }
+                                            }
+                                        });
+
+                            } else{
+
+                                Toast.makeText(getActivity(), "Failed to update password!",
+                                        Toast.LENGTH_SHORT).show();
+
+                            }
+                        }
+                    });*/
+
+
+
         }
         FirebaseDatabase database = FirebaseDatabase.getInstance();
-        //Log.d(TAG, user.getEmail());
+
         DatabaseReference usersRef = database.getReference().child("users");
         DatabaseReference userRef = usersRef.child(userID.replace(".", ","));
         Map<String, Object> userUpdates = new HashMap<>();
