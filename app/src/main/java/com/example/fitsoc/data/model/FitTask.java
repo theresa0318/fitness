@@ -23,6 +23,12 @@ public class FitTask {
         this.isAccepted = isAccepted;
     }
 
+    public int getPoints() {
+        if (level < 4) return 1;
+        else if (level > 7) return 5;
+        else return 5;
+    }
+
     public String toTextString() {
         if (type.equals("distance")) {
             if (value < 1000) {

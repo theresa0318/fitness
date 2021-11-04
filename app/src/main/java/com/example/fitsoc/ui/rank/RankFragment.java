@@ -30,7 +30,7 @@ public class RankFragment extends Fragment {
         inflater.inflate(R.layout.fragment_rank, container, false);
         binding = FragmentRankBinding.inflate(inflater, container, false);
         View view = binding.getRoot();
-        userID = ((Global)this.getActivity().getApplication()).getUserID();
+        userID = Global.getUserID();
         Calendar c = Calendar.getInstance();
         String date = generateDateString(c.get(Calendar.YEAR),c.get(Calendar.MONTH),c.get(Calendar.DAY_OF_MONTH));
         getDataFromDatabase(date);

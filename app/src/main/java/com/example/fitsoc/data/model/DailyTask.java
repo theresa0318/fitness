@@ -89,13 +89,23 @@ public class DailyTask {
         return null;
     }
 
+    public boolean isTasksAccepted() {
+        for (FitTask task : todayTasks) {
+            if (task.isAccepted) return true;
+        }
+        return false;
+    }
+
     private void updateTasks(FirebaseFirestore db, QueryDocumentSnapshot document) {
         try {
             String id = document.getId();
             db.collection("dailyTasks").document(id)
                     .update("simpleTask.isAccepted", getSimpleTask().isAccepted,
+                            "simpleTask.isCompleted", getSimpleTask().isCompleted,
                             "midTask.isAccepted", getMidTask().isAccepted,
-                            "hardTask.isAccepted", getHardTask().isAccepted)
+                            "midTask.isCompleted", getMidTask().isCompleted,
+                            "hardTask.isAccepted", getHardTask().isAccepted,
+                            "hardTask.isCompleted", getHardTask().isCompleted)
                     .addOnSuccessListener(aVoid ->
                             Log.d(TAG, "DocumentSnapshot successfully updated!"))
                     .addOnFailureListener(e ->
