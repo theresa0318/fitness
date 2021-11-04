@@ -110,7 +110,7 @@
                 android:layout_marginTop="50dp"
                 android:textSize="24sp"
                 android:paddingLeft="20dp"
-                android:text="Start: null"/>
+                android:text="Start: Unknown"/>
 
             <TextView
                 android:id="@+id/destination"
@@ -119,7 +119,7 @@
                 android:layout_weight="1"
                 android:textSize="24sp"
                 android:paddingLeft="20dp"
-                android:text="Destination: null"/>
+                android:text="Destination: Unknown"/>
 
             <TextView
                 android:id="@+id/length"
@@ -137,7 +137,7 @@
                 android:layout_weight="1"
                 android:textSize="24sp"
                 android:paddingLeft="20dp"
-                android:text="Current Rank: 6"/>
+                android:text="Current Rank: Unknown"/>
 
             <TextView
                 android:id="@+id/cong"
