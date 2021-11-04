@@ -3,13 +3,13 @@ package com.example.fitsoc.ui;
 import android.app.Application;
 
 public class Global extends Application {
-    private static String userID;
+    private static String userID = null;
 
-    public String getUserID() {
+    public static String getUserID() {
         return userID;
     }
 
-    public void setUserID(String userID) {
-        this.userID = userID;
+    public static void setUserID(String currentUserID) {
+        userID = currentUserID;
     }
 }
