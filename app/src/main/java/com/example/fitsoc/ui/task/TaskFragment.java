@@ -10,6 +10,7 @@ import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.CheckBox;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AlertDialog;
@@ -50,7 +51,7 @@ public class TaskFragment extends Fragment {
         });
         dialog = builder.create();
         FirebaseFirestore db = FirebaseFirestore.getInstance();
-        String userID = ((Global)this.getActivity().getApplication()).getUserID();
+        String userID = Global.getUserID();
         db.collection("dailyTasks")
                 .whereEqualTo("userID", userID)
                 .whereEqualTo("date", generateDateString())
@@ -59,6 +60,7 @@ public class TaskFragment extends Fragment {
                     if (task.isSuccessful()) {
                         if (task.getResult().isEmpty()) {
                             dailyTask = new TaskList().createTodayTasks(userID);
+                            ((Global)this.getActivity().getApplication()).setDailyTask(dailyTask);
                         } else {
                             for (QueryDocumentSnapshot document : task.getResult()) {
                                 Log.d("TAG", document.getId() + " => " + document.getData());
@@ -108,6 +110,17 @@ public class TaskFragment extends Fragment {
                 fitTasks.add(hardTask);
             }
             dailyTask = new DailyTask(fitTasks, dateString, userIDString);
+            ((Global)this.getActivity().getApplication()).setDailyTask(dailyTask);
+            DailyTask storedDailyTask = ((Global)this.getActivity().getApplication()).getDailyTask();
+            if (storedDailyTask.isTasksAccepted()) {
+                acceptBtn.setEnabled(false);
+                if (storedDailyTask.getMidTask().isAccepted) mediumButton.setChecked(true);
+                if (storedDailyTask.getSimpleTask().isAccepted) easyButton.setChecked(true);
+                if (storedDailyTask.getHardTask().isAccepted) hardButton.setChecked(true);
+                mediumButton.setClickable(false);
+                easyButton.setClickable(false);
+                hardButton.setClickable(false);
+            }
         } catch (NullPointerException e) {
             Log.d("Error: ", e.getMessage());
         }
@@ -151,7 +164,9 @@ public class TaskFragment extends Fragment {
             if (hardButton.isChecked()) {
                 dailyTask.getHardTask().isAccepted = true;
             }
+            ((Global)this.getActivity().getApplication()).setDailyTask(dailyTask);
             dailyTask.writeToDatabase();
+            Toast.makeText(requireContext(), "Task Accepted!", Toast.LENGTH_SHORT).show();
         });
 
         dialog.show();
