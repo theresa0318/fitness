@@ -91,6 +91,10 @@ public class ProfileFragment extends Fragment {
     public static final int CAMERA_PERM_CODE = 101;
     public static final int CAMERA_REQUEST_CODE = 102;
     public static final int GALLERY_REQUEST_CODE = 103;
+    /*headShot size*/
+    private static int head_output_x = 150;
+    private static int head_output_y = 150;
+
 
     @SuppressLint("StaticFieldLeak")
     private class DownloadImageTask extends AsyncTask<String, Void, Bitmap> {
@@ -272,6 +276,7 @@ public class ProfileFragment extends Fragment {
 
         StorageReference riversRef = storageReference.child("images/" + username);
         Uri cameraUri = Uri.parse(MediaStore.Images.Media.insertImage(requireContext().getContentResolver(), cameraImg, null,null));
+        cropPhoto(cameraUri, 1, 1, head_output_x, head_output_y);
         UploadTask uploadTask = riversRef.putFile(cameraUri);
         uploadTask.addOnSuccessListener(new OnSuccessListener<UploadTask.TaskSnapshot>() {
             @Override
@@ -348,6 +353,7 @@ public class ProfileFragment extends Fragment {
         //final String randomKey = UUID.randomUUID().toString();
 
         StorageReference riversRef = storageReference.child("images/" + username);
+        cropPhoto(imageUri, 1, 1, head_output_x, head_output_y);
         UploadTask uploadTask = riversRef.putFile(imageUri);
         uploadTask.addOnSuccessListener(new OnSuccessListener<UploadTask.TaskSnapshot>() {
             @Override
@@ -426,6 +432,23 @@ public class ProfileFragment extends Fragment {
             }
         });
     }
+
+    /*crop original photo*/
+    public void cropPhoto(Uri uri, int aspect_x, int aspect_y, int output_x, int output_y){
+        Intent intent = new Intent("com.android.camera.action.CROP");
+        intent.setDataAndType(uri, "image/*");
+        // setting crop
+        intent.putExtra("crop", "true");
+        // image proportion
+        intent.putExtra("aspect_x", aspect_x);
+        intent.putExtra("aspect_y", aspect_y);
+        // image width & height
+        intent.putExtra("output_x", output_x);
+        intent.putExtra("output_y", output_y);
+        intent.putExtra("return-data", true);
+//        startActivityForResult(intent, CODE_RESULT_REQUEST);
+    }
+
 
 //    @Override
 //    public void onActivityResult(int requestCode, int resultCode, Intent data){
