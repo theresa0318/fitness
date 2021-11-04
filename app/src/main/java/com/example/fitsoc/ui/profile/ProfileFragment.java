@@ -89,7 +89,8 @@ public class ProfileFragment extends Fragment {
     private String imageUrl;
     private static final String DEFAULT_IMAGE_URL="@drawable/profile_icon";
     public static final int CAMERA_PERM_CODE = 101;
-    public static final int CAMERA_REQUEST_CODE =102;
+    public static final int CAMERA_REQUEST_CODE = 102;
+    public static final int GALLERY_REQUEST_CODE = 103;
 
     @SuppressLint("StaticFieldLeak")
     private class DownloadImageTask extends AsyncTask<String, Void, Bitmap> {
@@ -184,8 +185,7 @@ public class ProfileFragment extends Fragment {
 
                     // load image from url if not default picture
                     if (!imageUrl.equals(DEFAULT_IMAGE_URL)){
-                        new DownloadImageTask(profileAvatar)
-                                .execute(imageUrl);
+                        new DownloadImageTask(profileAvatar).execute(imageUrl);
                     } else {
                         profileAvatar.setImageDrawable(getResources().getDrawable(R.drawable.profile_icon));
                     }
@@ -205,7 +205,7 @@ public class ProfileFragment extends Fragment {
         Intent intent = new Intent();
         intent.setType("image/*");
         intent.setAction(Intent.ACTION_GET_CONTENT);
-        startActivityForResult(intent,1);
+        startActivityForResult(intent,GALLERY_REQUEST_CODE);
 //        Intent data = null;
 //        profileAvatar.setImageURI(data.getData());
 //        imageUri = data.getData();
@@ -251,24 +251,19 @@ public class ProfileFragment extends Fragment {
     @Override
     public void onActivityResult(int requestCode, int resultCode, @Nullable Intent data){
         super.onActivityResult(requestCode, resultCode, data);
-        if (requestCode == 1 && resultCode == RESULT_OK && data != null && data.getData() != null){
+        if (requestCode == GALLERY_REQUEST_CODE && resultCode == RESULT_OK && data != null && data.getData() != null){
             imageUri = data.getData();
             profileAvatar.setImageURI(imageUri);
             uploadGalleryPicture();
         }
-        if (requestCode == CAMERA_REQUEST_CODE){
+        if (requestCode == CAMERA_REQUEST_CODE && resultCode == RESULT_OK && data != null && data.getExtras() != null && data.getExtras().get("data") != null) {
             cameraImg = (Bitmap) data.getExtras().get("data");
             profileAvatar.setImageBitmap(cameraImg);
-            try {
-                uploadCameraPicture();
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-
+            uploadCameraPicture();
         }
     }
 
-    private void uploadCameraPicture() throws IOException {
+    private void uploadCameraPicture(){
         final ProgressDialog pd = new ProgressDialog(getContext());
         pd.setTitle("Uploading");
         pd.show();

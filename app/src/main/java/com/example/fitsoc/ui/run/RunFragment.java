@@ -40,6 +40,7 @@ import com.example.fitsoc.data.RunningData;
 import com.example.fitsoc.data.model.DailyTask;
 import com.example.fitsoc.data.model.FitTask;
 import com.example.fitsoc.databinding.FragmentRunBinding;
+import com.example.fitsoc.ui.Global;
 import com.google.android.gms.auth.api.signin.GoogleSignIn;
 import com.google.android.gms.auth.api.signin.GoogleSignInAccount;
 import com.google.android.gms.fitness.Fitness;
@@ -114,6 +115,7 @@ public class RunFragment extends Fragment implements OnMapReadyCallback,
     private MarkerOptions endOptions;
     private Marker startMarker;
     private Marker endMarker;
+    private Marker targetMarker;
     private PolylineOptions routeOptions;
     private Polyline route;
 
@@ -146,7 +148,8 @@ public class RunFragment extends Fragment implements OnMapReadyCallback,
     private FitTask distanceTask;
     private FitTask timeTask;
     private RandomTarget target;
-    String userID = "rua";
+    private String userID;
+    private boolean hasTask;
 
     private boolean isStartRunning = false;
     private boolean firstRun = true;//this is for run before stop
@@ -167,6 +170,8 @@ public class RunFragment extends Fragment implements OnMapReadyCallback,
         if (!locationPermissionGranted) getLocationPermission();
         if (!recognitionPermissionGranted) getRecognitionPermission();
         model = new ViewModelProvider(this).get(RunViewModel.class);
+        userID = ((Global)this.getActivity().getApplication()).getUserID();
+
     }
 
 
@@ -528,21 +533,23 @@ public class RunFragment extends Fragment implements OnMapReadyCallback,
         Toast.makeText(requireContext(), "Distance: " + totalDistance, Toast.LENGTH_SHORT).show();
         OptionalDouble avgSpeed = speeds.stream().mapToLong(speed -> speed).average();
         Toast.makeText(requireContext(), "Speed: " + avgSpeed.getAsDouble(), Toast.LENGTH_SHORT).show();
-        if (distanceTask.isAccepted && !distanceTask.isCompleted) {
-            if (totalDistance >= distanceTask.value) {
-                distanceTask.isCompleted = true;
-                Toast.makeText(getContext(), "Distance Task accomplished!", Toast.LENGTH_LONG)
-                        .show();
+        if (hasTask) {
+            if (distanceTask.isAccepted && !distanceTask.isCompleted) {
+                if (totalDistance >= distanceTask.value) {
+                    distanceTask.isCompleted = true;
+                    Toast.makeText(getContext(), "Distance Task accomplished!", Toast.LENGTH_LONG)
+                            .show();
+                }
+            }
+            if (timeTask.isAccepted && !distanceTask.isCompleted) {
+                if (totalTime >= (long) timeTask.value * 60 * 1000) {
+                    timeTask.isCompleted = true;
+                    Toast.makeText(getContext(), "Time Task accomplished!", Toast.LENGTH_LONG)
+                            .show();
+                }
             }
         }
-        if (timeTask.isAccepted && !distanceTask.isCompleted) {
-            if (totalTime >= timeTask.value) {
-                timeTask.isCompleted = true;
-                Toast.makeText(getContext(), "Time Task accomplished!", Toast.LENGTH_LONG)
-                        .show();
-            }
-        }
-        RunningData data = new RunningData();
+        RunningData data = new RunningData(userID);
         data.setDistance(totalDistance);
         data.setSpeedAVG((long) avgSpeed.getAsDouble());
         data.setStartTime(new Timestamp(startTime));
@@ -722,11 +729,14 @@ public class RunFragment extends Fragment implements OnMapReadyCallback,
             for (Location location : locationResult.getLocations()) {
                 Log.d("Location Update: ", location.toString());
                 locationList.add(location);
-                if (targetTask.isAccepted && !targetTask.isCompleted) {
-                    if (target.isAtTargetLocation(location)) {
-                        targetTask.isCompleted = true;
-                        Toast.makeText(getContext(), "Reached the target point!", Toast.LENGTH_LONG)
-                                .show();
+                if (hasTask) {
+                    if (targetTask.isAccepted && !targetTask.isCompleted) {
+                        if (target.isAtTargetLocation(location)) {
+                            targetTask.isCompleted = true;
+                            targetMarker.remove();
+                            Toast.makeText(getContext(), "Reached the target point!", Toast.LENGTH_LONG)
+                                    .show();
+                        }
                     }
                 }
                 LatLng nowLatLng = new LatLng(location.getLatitude(), location.getLongitude());
@@ -854,6 +864,7 @@ public class RunFragment extends Fragment implements OnMapReadyCallback,
                     if (task.isSuccessful()) {
                         if (task.getResult().isEmpty()) {
                             Log.d("TAG", "Getting empty documents: ");
+                            hasTask = false;
                             LatLng nowLatLng = new LatLng(lastKnownLocation.getLatitude(), lastKnownLocation.getLongitude());
                             map.animateCamera(CameraUpdateFactory.newLatLngZoom(
                                     nowLatLng, DEFAULT_ZOOM), 700, new GoogleMap.CancelableCallback() {
@@ -868,6 +879,7 @@ public class RunFragment extends Fragment implements OnMapReadyCallback,
                                 }
                             });
                         } else {
+                            hasTask = true;
                             for (QueryDocumentSnapshot document : task.getResult()) {
                                 Log.d("TAG", document.getId() + " => " + document.getData());
                                 Map<String, Object> data = document.getData();
@@ -885,9 +897,9 @@ public class RunFragment extends Fragment implements OnMapReadyCallback,
                                     target.calculateDistance(location);
                                     LatLng targetLatLng = new LatLng(targetLocation.getLatitude(), targetLocation.getLongitude());
                                     MarkerOptions targetOption  = new MarkerOptions().position(targetLatLng)
-                                            .icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_VIOLET))
+                                            .icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_ORANGE))
                                             .title("Target!");
-                                    map.addMarker(targetOption);
+                                    targetMarker = map.addMarker(targetOption);
                                     map.animateCamera(CameraUpdateFactory.newLatLngZoom(
                                             targetLatLng, DEFAULT_ZOOM), 700, new GoogleMap.CancelableCallback() {
                                         @Override

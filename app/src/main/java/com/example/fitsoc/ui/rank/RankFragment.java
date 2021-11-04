@@ -11,6 +11,7 @@ import androidx.fragment.app.Fragment;
 import com.example.fitsoc.R;
 import com.example.fitsoc.databinding.FragmentHistoryBinding;
 import com.example.fitsoc.databinding.FragmentRankBinding;
+import com.example.fitsoc.ui.Global;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.Query;
 import com.google.firebase.firestore.QueryDocumentSnapshot;
@@ -29,7 +30,7 @@ public class RankFragment extends Fragment {
         inflater.inflate(R.layout.fragment_rank, container, false);
         binding = FragmentRankBinding.inflate(inflater, container, false);
         View view = binding.getRoot();
-        userID = "abcdefg@gmail.com";
+        userID = ((Global)this.getActivity().getApplication()).getUserID();
         Calendar c = Calendar.getInstance();
         String date = generateDateString(c.get(Calendar.YEAR),c.get(Calendar.MONTH),c.get(Calendar.DAY_OF_MONTH));
         getDataFromDatabase(date);

@@ -5,7 +5,9 @@ import static android.view.View.GONE;
 import static android.view.View.VISIBLE;
 
 import android.app.Activity;
+import android.content.Context;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.graphics.drawable.Drawable;
 import android.os.Bundle;
 import android.text.Editable;
@@ -30,6 +32,7 @@ import androidx.lifecycle.ViewModelProvider;
 import com.example.fitsoc.NavigationActivity;
 import com.example.fitsoc.R;
 import com.example.fitsoc.databinding.ActivityLoginBinding;
+import com.example.fitsoc.ui.Global;
 import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.Task;
 import com.google.firebase.auth.AuthResult;
@@ -44,6 +47,9 @@ public class LoginActivity extends AppCompatActivity implements View.OnClickList
     private FirebaseAuth mAuth;
     private ProgressBar loadingProgressBar;
 
+    private String userID;
+    private String password;
+
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -52,15 +58,21 @@ public class LoginActivity extends AppCompatActivity implements View.OnClickList
         setContentView(binding.getRoot());
         mAuth = FirebaseAuth.getInstance();
 
+        if(readFromSharedPref()){
+            ((Global)this.getApplication()).setUserID(userID);
+
+            final EditText usernameLoginEditText = binding.usernameLogin;
+            final EditText passwordLoginEditText = binding.passwordLogin;
+            usernameLoginEditText.setText(userID);
+            passwordLoginEditText.setText(password);
+            Intent intent = new Intent(LoginActivity.this, NavigationActivity.class);
+            startActivity(intent);
+        }
+
         Button button_login_email = (Button) findViewById(R.id.login_email);
         Drawable drawable_login_email = getResources().getDrawable(R.drawable.email_icon);
         drawable_login_email.setBounds(0, 0, 100, 100);
         button_login_email.setCompoundDrawables(drawable_login_email, null, null, null);
-
-        Button button_login_wechat = (Button) findViewById(R.id.login_wechat);
-        Drawable drawable_login_wechat = getResources().getDrawable(R.drawable.wechat_icon);
-        drawable_login_wechat.setBounds(0, 0, 100, 100);
-        button_login_wechat.setCompoundDrawables(drawable_login_wechat, null, null, null);
 
         loginViewModel = new ViewModelProvider(this, new LoginViewModelFactory())
                 .get(LoginViewModel.class);
@@ -171,6 +183,9 @@ public class LoginActivity extends AppCompatActivity implements View.OnClickList
                     @Override
                     public void onComplete(@NonNull Task<AuthResult> task) {
                         if (task.isSuccessful()) {
+                            //store user info into shared preference
+                            writeToSharedPref(username,password);
+
                             // Login success, display a message to the user, then redirect to navigation page.
                             Log.d(TAG, "loginUserWithEmail:success");
                             Toast.makeText(LoginActivity.this, "Congratulations! You have logged in successfully.", Toast.LENGTH_SHORT).show();
@@ -197,4 +212,30 @@ public class LoginActivity extends AppCompatActivity implements View.OnClickList
 //    private void showLoginFailed(@StringRes Integer errorString) {
 //        Toast.makeText(getApplicationContext(), errorString, Toast.LENGTH_SHORT).show();
 //    }
+
+    public void writeToSharedPref(){
+        SharedPreferences sharedPref = this.getPreferences(Context.MODE_PRIVATE);
+        SharedPreferences.Editor editor = sharedPref.edit();
+        editor.putString("userID",binding.usernameLogin.getText().toString());
+        editor.putString("password",binding.passwordLogin.getText().toString());
+        editor.apply();
+    }
+
+    public void  writeToSharedPref(String userName, String password){
+        SharedPreferences sharedPref = this.getPreferences(Context.MODE_PRIVATE);
+        SharedPreferences.Editor editor = sharedPref.edit();
+        editor.putString("userID",userName);
+        editor.putString("password",password);
+        editor.apply();
+    }
+
+    public boolean readFromSharedPref(){
+        SharedPreferences sharedPref = this.getPreferences(Context.MODE_PRIVATE);
+        userID = sharedPref.getString("userID","");
+        password = sharedPref.getString("password","");
+        if(!userID.isEmpty() && !password.isEmpty()){
+            return true;
+        }
+        return  false;
+    }
 }
