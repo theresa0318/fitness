@@ -18,16 +18,22 @@
         tools:layout="@layout/fragment_community" />
 
     <fragment
-        android:id="@+id/nav_calorie"
-        android:name="com.example.fitsoc.ui.calorie.CalorieCalculatorFragment"
-        android:label="@string/menu_calorie"
-        tools:layout="@layout/fragment_calorie_calculator" />
+        android:id="@+id/nav_task"
+        android:name="com.example.fitsoc.ui.task.TaskFragment"
+        android:label="@string/menu_task"
+        tools:layout="@layout/fragment_task" />
 
     <fragment
         android:id="@+id/nav_history"
         android:name="com.example.fitsoc.ui.history.HistoryFragment"
         android:label="@string/menu_history"
         tools:layout="@layout/fragment_history" />
+
+    <fragment
+        android:id="@+id/nav_rank"
+        android:name="com.example.fitsoc.ui.rank.RankFragment"
+        android:label="@string/menu_rank"
+        tools:layout="@layout/fragment_rank" />
 
     <fragment
         android:id="@+id/nav_profile"
@@ -48,3 +54,4 @@
         tools:layout="@layout/fragment_logout" />
 
 </navigation>
+
