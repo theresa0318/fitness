@@ -2,10 +2,14 @@ package com.example.fitsoc.ui.profile;
 
 import static android.app.Activity.RESULT_OK;
 import static android.content.ContentValues.TAG;
+import static android.content.Context.CAMERA_SERVICE;
 
+import android.Manifest;
 import android.annotation.SuppressLint;
+import android.app.Activity;
 import android.app.ProgressDialog;
 import android.content.Intent;
+import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.drawable.Drawable;
@@ -18,6 +22,7 @@ import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.ProgressBar;
 import android.widget.TextView;
@@ -25,6 +30,8 @@ import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.core.app.ActivityCompat;
+import androidx.core.content.ContextCompat;
 import androidx.fragment.app.Fragment;
 
 import com.example.fitsoc.R;
@@ -48,18 +55,25 @@ import com.google.firebase.storage.OnProgressListener;
 import com.google.firebase.storage.StorageReference;
 import com.google.firebase.storage.UploadTask;
 
+import java.io.BufferedOutputStream;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.File;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Objects;
 import java.util.UUID;
 
 public class ProfileFragment extends Fragment {
 
     private TextView profileUsername, profileGender, profileAge, profileHeight, profileWeight;
     private ImageView profileAvatar;
+    private ImageView camera;
+    public Bitmap cameraImg;
     public Uri imageUri;
     private FirebaseAuth mAuth;
     private FirebaseUser user;
@@ -74,8 +88,10 @@ public class ProfileFragment extends Fragment {
     private int weight;
     private String imageUrl;
     private static final String DEFAULT_IMAGE_URL="@drawable/profile_icon";
+    public static final int CAMERA_PERM_CODE = 101;
+    public static final int CAMERA_REQUEST_CODE =102;
 
-
+    @SuppressLint("StaticFieldLeak")
     private class DownloadImageTask extends AsyncTask<String, Void, Bitmap> {
         ImageView bmImage;
 
@@ -100,7 +116,6 @@ public class ProfileFragment extends Fragment {
             bmImage.setImageBitmap(result);
         }
     }
-
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
@@ -131,8 +146,19 @@ public class ProfileFragment extends Fragment {
             }
         });
 
+        camera = profileView.findViewById(R.id.profile_camera);
+
+        camera.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                askCameraPermissions();
+            }
+        });
+
+
+
         reference.child(userID).addListenerForSingleValueEvent(new ValueEventListener() {
-            @SuppressLint("SetTextI18n")
+            @SuppressLint({"SetTextI18n", "UseCompatLoadingForDrawables"})
             @Override
             public void onDataChange(@NonNull DataSnapshot snapshot) {
                 RegisteredUser userProfile = snapshot.getValue(RegisteredUser.class);
@@ -161,7 +187,7 @@ public class ProfileFragment extends Fragment {
                         new DownloadImageTask(profileAvatar)
                                 .execute(imageUrl);
                     } else {
-                        profileAvatar.setImageResource(R.drawable.profile_icon);
+                        profileAvatar.setImageDrawable(getResources().getDrawable(R.drawable.profile_icon));
                     }
                 }
             }
@@ -185,36 +211,141 @@ public class ProfileFragment extends Fragment {
 //        imageUri = data.getData();
     }
 
+
+    private void askCameraPermissions() {
+        if (ContextCompat.checkSelfPermission(getContext(), Manifest.permission.CAMERA) != PackageManager.PERMISSION_GRANTED) {
+            ActivityCompat.requestPermissions(getActivity(), new String[] {Manifest.permission.CAMERA}, CAMERA_PERM_CODE);
+        } else {
+            openCamera();
+        }
+    }
+
+    private void openCamera() {
+        Intent camera = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
+        startActivityForResult(camera, CAMERA_REQUEST_CODE);
+    }
+
+
+//    @Override
+//    public void onActivityResult(int requestCode, int resultCode, @Nullable Intent data){
+//        if (requestCode == CAMERA_REQUEST_CODE){
+//            imageUri = data.getData();
+//            profileAvatar.setImageURI(imageUri);
+//        }
+//    }
+
+
+    @Override
+    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
+        if (requestCode == CAMERA_PERM_CODE) {
+            if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                openCamera();
+            } else {
+                Toast.makeText(getActivity(), "Camera permission is required.", Toast.LENGTH_SHORT).show();
+            }
+        }
+    }
+
+
+
     @Override
     public void onActivityResult(int requestCode, int resultCode, @Nullable Intent data){
         super.onActivityResult(requestCode, resultCode, data);
         if (requestCode == 1 && resultCode == RESULT_OK && data != null && data.getData() != null){
             imageUri = data.getData();
             profileAvatar.setImageURI(imageUri);
-            uploadPicture();
-//            String uid = user.getEmail().replace(".", ",");
-//            StorageReference picRef = FirebaseStorage.getInstance().getReference().child("users").child(uid);
-//            picRef.putFile(imageUri).addOnCompleteListener(new OnCompleteListener<UploadTask.TaskSnapshot>() {
-//                @Override
-//                public void onComplete(@NonNull Task<UploadTask.TaskSnapshot> task) {
-//                    if (task.isSuccessful()) {
-//                        picRef.getDownloadUrl().addOnCompleteListener(new OnCompleteListener<Uri>() {
-//                            @Override
-//                            public void onComplete(@NonNull Task<Uri> task) {
-//                                RegisteredUser newUser = new RegisteredUser();
-//                                newUser.setImageurl(task.toString());
-//                                db.getReference().child("users").child(newUser.getUserId().replace(".", ",")).setValue(newUser);
-//                            }
-//                        });
-//                    } else {
-//                        Toast.makeText(getContext(), "Something wrong happened.", Toast.LENGTH_SHORT).show();
-//                    }
-//                }
-//            });
+            uploadGalleryPicture();
+        }
+        if (requestCode == CAMERA_REQUEST_CODE){
+            cameraImg = (Bitmap) data.getExtras().get("data");
+            profileAvatar.setImageBitmap(cameraImg);
+            try {
+                uploadCameraPicture();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+
         }
     }
 
-    private void uploadPicture() {
+    private void uploadCameraPicture() throws IOException {
+        final ProgressDialog pd = new ProgressDialog(getContext());
+        pd.setTitle("Uploading");
+        pd.show();
+
+        //final String randomKey = UUID.randomUUID().toString();
+
+        StorageReference riversRef = storageReference.child("images/" + username);
+        Uri cameraUri = Uri.parse(MediaStore.Images.Media.insertImage(requireContext().getContentResolver(), cameraImg, null,null));
+        UploadTask uploadTask = riversRef.putFile(cameraUri);
+        uploadTask.addOnSuccessListener(new OnSuccessListener<UploadTask.TaskSnapshot>() {
+            @Override
+            public void onSuccess(UploadTask.TaskSnapshot taskSnapshot) {
+                pd.dismiss();
+
+                final StorageReference ref = storage.getReference().child("images/"+username);
+
+                Task<Uri> urlTask = uploadTask.continueWithTask(new Continuation<UploadTask.TaskSnapshot, Task<Uri>>() {
+                    @Override
+                    public Task<Uri> then(@NonNull Task<UploadTask.TaskSnapshot> task) throws Exception {
+                        if (!task.isSuccessful()) {
+                            throw task.getException();
+                        }
+                        // Log.d(TAG, "Get download url");
+                        // Continue with the task to get the download URL
+                        return ref.getDownloadUrl();
+                    }
+                }).addOnCompleteListener(new OnCompleteListener<Uri>() {
+                    @Override
+                    public void onComplete(@NonNull Task<Uri> task) {
+                        if (task.isSuccessful()) {
+                            Uri downloadUri = task.getResult();
+                            imageUrl = String.valueOf(downloadUri);
+                            //updatedUser.setImageUrl(imageUrl);
+                            Log.d(TAG, imageUrl);
+
+                            DatabaseReference userRef = db.getReference().child("users").child(username.replace(".", ","));
+                            Map<String, Object> userUpdate = new HashMap<>();
+                            userUpdate.put("imageUrl", imageUrl);
+                            userRef.updateChildren(userUpdate,new DatabaseReference.CompletionListener() {
+                                @Override
+                                public void onComplete(DatabaseError databaseError, DatabaseReference databaseReference) {
+                                    if (databaseError != null) {
+                                        Log.w(TAG, "uploadImageUrl:failure");
+                                        Toast.makeText(getActivity(), "Fail to upload profile image! Please try again.",
+                                                Toast.LENGTH_SHORT).show();
+                                    } else {
+                                        Log.d(TAG, "uploadImageUrl:success");
+                                        Toast.makeText(getActivity(), "You have uploaded your profile image successfully.", Toast.LENGTH_SHORT).show();
+                                    }
+                                }
+                            });
+
+                            //db.getReference().child("users").child(updatedUser.getUserId().replace(".", ",")).setValue(updatedUser);
+                        } else {
+                            Log.w(TAG, "getImageUrl:failure");
+                            Toast.makeText(getActivity(), "Fail to upload profile image! Please try again.",
+                                    Toast.LENGTH_SHORT).show();
+                        }
+                    }
+                });
+            }
+        }).addOnFailureListener(new OnFailureListener() {
+            @Override
+            public void onFailure(@NonNull Exception e) {
+                pd.dismiss();
+                Toast.makeText(getContext(), "Fail to upload profile image! Please try again.", Toast.LENGTH_SHORT).show();
+            }
+        }).addOnProgressListener(new OnProgressListener<UploadTask.TaskSnapshot>() {
+            @Override
+            public void onProgress(@NonNull UploadTask.TaskSnapshot taskSnapshot) {
+                double progressPercent = (100.00* taskSnapshot.getBytesTransferred() /taskSnapshot.getTotalByteCount());
+                pd.setMessage("progress: " + (int)progressPercent + "%");
+            }
+        });
+    }
+
+    private void uploadGalleryPicture() {
         final ProgressDialog pd = new ProgressDialog(getContext());
         pd.setTitle("Uploading");
         pd.show();
@@ -247,7 +378,7 @@ public class ProfileFragment extends Fragment {
                         if (!task.isSuccessful()) {
                             throw task.getException();
                         }
-                        //Log.d(TAG, "Get download url");
+                        // Log.d(TAG, "Get download url");
                         // Continue with the task to get the download URL
                         return ref.getDownloadUrl();
                     }
