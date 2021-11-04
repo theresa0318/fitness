@@ -10,7 +10,7 @@
         android:id="@+id/profile_avatar"
         android:layout_width="128dp"
         android:layout_height="128dp"
-        android:src="@drawable/profile_icon"
+        android:onClick="onClick"
         android:layout_marginStart="72dp"
         android:layout_marginTop="64dp"
         android:layout_marginEnd="72dp"
@@ -29,7 +29,7 @@
         android:layout_marginEnd="64dp"
         android:textAlignment="textStart"
         android:textSize="18sp"
-        android:text="User Name: 1234567@qq.com"
+        android:text="User Name: "
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/profile_avatar"
@@ -44,7 +44,7 @@
         android:layout_marginEnd="64dp"
         android:textAlignment="textStart"
         android:textSize="18sp"
-        android:text="Gender: Female"
+        android:text="Gender: "
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/text_profile_username"
@@ -59,7 +59,7 @@
         android:layout_marginEnd="64dp"
         android:textAlignment="textStart"
         android:textSize="18sp"
-        android:text="Age: 20"
+        android:text="Age: "
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/text_profile_gender"
@@ -74,7 +74,7 @@
         android:layout_marginEnd="64dp"
         android:textAlignment="textStart"
         android:textSize="18sp"
-        android:text="Height: 163 cm"
+        android:text="Height: "
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/text_profile_age"
@@ -89,56 +89,56 @@
         android:layout_marginEnd="64dp"
         android:textAlignment="textStart"
         android:textSize="18sp"
-        android:text="Weight: 50 kg"
+        android:text="Weight: "
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/text_profile_height"
         android:gravity="start" />
 
-    <TextView
-        android:id="@+id/text_profile_todayRecord"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_marginStart="64dp"
-        android:layout_marginTop="16dp"
-        android:layout_marginEnd="64dp"
-        android:textAlignment="textStart"
-        android:textSize="18sp"
-        android:text="Today's Record: 1 km / 10 min"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/text_profile_weight"
-        android:gravity="start" />
+<!--    <TextView-->
+<!--        android:id="@+id/text_profile_todayRecord"-->
+<!--        android:layout_width="match_parent"-->
+<!--        android:layout_height="wrap_content"-->
+<!--        android:layout_marginStart="64dp"-->
+<!--        android:layout_marginTop="16dp"-->
+<!--        android:layout_marginEnd="64dp"-->
+<!--        android:textAlignment="textStart"-->
+<!--        android:textSize="18sp"-->
+<!--        android:text="Today's Record: 1 km / 10 min"-->
+<!--        app:layout_constraintEnd_toEndOf="parent"-->
+<!--        app:layout_constraintStart_toStartOf="parent"-->
+<!--        app:layout_constraintTop_toBottomOf="@+id/text_profile_weight"-->
+<!--        android:gravity="start" />-->
 
-    <TextView
-        android:id="@+id/text_profile_todayRank"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_marginStart="64dp"
-        android:layout_marginTop="16dp"
-        android:layout_marginEnd="64dp"
-        android:textAlignment="textStart"
-        android:textSize="18sp"
-        android:text="Today's Rank: 10"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/text_profile_todayRecord"
-        android:gravity="start" />
+<!--    <TextView-->
+<!--        android:id="@+id/text_profile_todayRank"-->
+<!--        android:layout_width="match_parent"-->
+<!--        android:layout_height="wrap_content"-->
+<!--        android:layout_marginStart="64dp"-->
+<!--        android:layout_marginTop="16dp"-->
+<!--        android:layout_marginEnd="64dp"-->
+<!--        android:textAlignment="textStart"-->
+<!--        android:textSize="18sp"-->
+<!--        android:text="Today's Rank: 10"-->
+<!--        app:layout_constraintEnd_toEndOf="parent"-->
+<!--        app:layout_constraintStart_toStartOf="parent"-->
+<!--        app:layout_constraintTop_toBottomOf="@+id/text_profile_todayRecord"-->
+<!--        android:gravity="start" />-->
 
-    <TextView
-        android:id="@+id/text_profile_todayCalorie"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_marginStart="64dp"
-        android:layout_marginTop="16dp"
-        android:layout_marginEnd="64dp"
-        android:textAlignment="textStart"
-        android:textSize="18sp"
-        android:text="Today's Energy Burned: 600 cal"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/text_profile_todayRank"
-        android:gravity="start" />
+<!--    <TextView-->
+<!--        android:id="@+id/text_profile_todayCalorie"-->
+<!--        android:layout_width="match_parent"-->
+<!--        android:layout_height="wrap_content"-->
+<!--        android:layout_marginStart="64dp"-->
+<!--        android:layout_marginTop="16dp"-->
+<!--        android:layout_marginEnd="64dp"-->
+<!--        android:textAlignment="textStart"-->
+<!--        android:textSize="18sp"-->
+<!--        android:text="Today's Energy Burned: 600 cal"-->
+<!--        app:layout_constraintEnd_toEndOf="parent"-->
+<!--        app:layout_constraintStart_toStartOf="parent"-->
+<!--        app:layout_constraintTop_toBottomOf="@+id/text_profile_todayRank"-->
+<!--        android:gravity="start" />-->
 
 
 
