@@ -10,6 +10,7 @@ import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.CheckBox;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AlertDialog;
@@ -34,6 +35,7 @@ public class TaskFragment extends Fragment {
     private CheckBox mediumButton;
     private CheckBox hardButton;
     private Button acceptBtn;
+    private Button taskList;
     private DailyTask dailyTask;
     private AlertDialog dialog;
 
@@ -140,6 +142,7 @@ public class TaskFragment extends Fragment {
         mediumButton = (CheckBox) view.findViewById(R.id.mediumButton);
         hardButton = (CheckBox) view.findViewById(R.id.hardButton);
         acceptBtn = view.findViewById(R.id.settings_save);
+        taskList = view.findViewById(R.id.task_list);
 
         acceptBtn.setOnClickListener(v -> {
             if (easyButton.isChecked()) {
@@ -152,6 +155,11 @@ public class TaskFragment extends Fragment {
                 dailyTask.getHardTask().isAccepted = true;
             }
             dailyTask.writeToDatabase();
+            Toast.makeText(getActivity(), "Your plan has been created!", Toast.LENGTH_LONG).show();
+        });
+
+        taskList.setOnClickListener(v -> {
+            showTaskList ();
         });
 
         dialog.show();
@@ -197,6 +205,20 @@ public class TaskFragment extends Fragment {
         int month = now.get(Calendar.MONTH) + 1;
         int day = now.get(Calendar.DAY_OF_MONTH);
         return year + "-" + month + "-" + day;
+    }
+
+    public void showTaskList () {
+        android.app.AlertDialog.Builder builder1 = new android.app.AlertDialog.Builder(getActivity());
+        builder1.setMessage("Plan: " + "Easy, Medium" + "\n" + "Completed Tasks: " + "Easy" + "\n" + "Bonus Obtained: " + "1" )
+                .setTitle("Division Information");
+        builder1.setPositiveButton("Get it!", new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+                dialog.dismiss();
+            }
+        });
+        android.app.AlertDialog diviInfo = builder1.create();
+        diviInfo.show();
     }
 
 }

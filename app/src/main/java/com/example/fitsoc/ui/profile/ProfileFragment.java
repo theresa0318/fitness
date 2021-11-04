@@ -7,7 +7,9 @@ import static android.content.Context.CAMERA_SERVICE;
 import android.Manifest;
 import android.annotation.SuppressLint;
 import android.app.Activity;
+import android.app.AlertDialog;
 import android.app.ProgressDialog;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
@@ -23,6 +25,7 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
+import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.ProgressBar;
 import android.widget.TextView;
@@ -32,6 +35,7 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
+import androidx.fragment.app.DialogFragment;
 import androidx.fragment.app.Fragment;
 
 import com.example.fitsoc.R;
@@ -74,6 +78,7 @@ public class ProfileFragment extends Fragment {
     private TextView profileUsername, profileGender, profileAge, profileHeight, profileWeight;
     private ImageView profileAvatar;
     private ImageView camera;
+    private ImageButton divisionInfo;
     public Bitmap cameraImg;
     public Uri imageUri;
     private FirebaseAuth mAuth;
@@ -128,6 +133,11 @@ public class ProfileFragment extends Fragment {
                              Bundle savedInstanceState) {
         // Inflate the layout for this fragment
         View profileView = inflater.inflate(R.layout.fragment_profile, container, false);
+        divisionInfo = profileView.findViewById(R.id.divisionInfo);
+        divisionInfo.setOnClickListener(view -> {
+            showDivisionInfo();
+        });
+
         String userID;
         mAuth = FirebaseAuth.getInstance();
         if (Global.getUserID() == null) {
@@ -453,6 +463,20 @@ public class ProfileFragment extends Fragment {
         intent.putExtra("output_y", output_y);
         intent.putExtra("return-data", true);
 //        startActivityForResult(intent, CODE_RESULT_REQUEST);
+    }
+
+    public void showDivisionInfo () {
+        AlertDialog.Builder builder = new AlertDialog.Builder(getActivity());
+        builder.setMessage("Beginner: < 10 points" + "\n" + "Bronze: >= 10 and < 20 points" + "\n" + "Sliver: >= 20 and < 30 points" + "\n" + "Gold: >= 40 points")
+                .setTitle("Division Information");
+        builder.setPositiveButton("Get it!", new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+                dialog.dismiss();
+            }
+        });
+        AlertDialog diviInfo = builder.create();
+        diviInfo.show();
     }
 
 

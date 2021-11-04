@@ -29,6 +29,7 @@
     <string name="action_height_short">Height</string>
     <string name="action_weight_short">Weight</string>
     <string name="settings_save">Accept</string>
+    <string name="task_list">Task List</string>
 
     <string name="menu_run">Run</string>
     <string name="menu_task">Tasks</string>

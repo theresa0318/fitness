@@ -106,22 +106,38 @@
         app:layout_constraintTop_toBottomOf="@+id/text_profile_height"
         android:gravity="start" />
 
+    <TextView
+        android:id="@+id/text_profile_division"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="64dp"
+        android:layout_marginTop="16dp"
+        android:layout_marginEnd="96dp"
+        android:textAlignment="textStart"
+        android:textSize="18sp"
+        android:text="Division: Sliver"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/text_profile_weight"
+        android:gravity="start" />
+
+    <ImageButton
+        android:id="@+id/divisionInfo"
+        android:layout_width="30dp"
+        android:layout_height="30dp"
+        android:layout_marginStart="320dp"
+        android:layout_marginTop="420dp"
+        android:layout_marginEnd="64dp"
+        android:layout_marginBottom="280dp"
+        android:src="@drawable/exclamation_mark"
+        android:background="@color/white"
+        android:scaleType="fitXY"
+        android:onClick="showDivisionInfo"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
 
 
-    <!--    <TextView-->
-<!--        android:id="@+id/text_profile_todayRecord"-->
-<!--        android:layout_width="match_parent"-->
-<!--        android:layout_height="wrap_content"-->
-<!--        android:layout_marginStart="64dp"-->
-<!--        android:layout_marginTop="16dp"-->
-<!--        android:layout_marginEnd="64dp"-->
-<!--        android:textAlignment="textStart"-->
-<!--        android:textSize="18sp"-->
-<!--        android:text="Today's Record: 1 km / 10 min"-->
-<!--        app:layout_constraintEnd_toEndOf="parent"-->
-<!--        app:layout_constraintStart_toStartOf="parent"-->
-<!--        app:layout_constraintTop_toBottomOf="@+id/text_profile_weight"-->
-<!--        android:gravity="start" />-->
 
 <!--    <TextView-->
 <!--        android:id="@+id/text_profile_todayRank"-->
