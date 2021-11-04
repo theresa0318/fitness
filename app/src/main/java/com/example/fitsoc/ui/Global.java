@@ -12,4 +12,6 @@ public class Global extends Application {
     public static void setUserID(String currentUserID) {
         userID = currentUserID;
     }
+
+
 }
