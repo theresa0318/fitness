@@ -31,7 +31,6 @@ import androidx.annotation.RequiresApi;
 import androidx.appcompat.app.AlertDialog;
 import androidx.core.content.ContextCompat;
 import androidx.fragment.app.Fragment;
-import androidx.fragment.app.FragmentManager;
 import androidx.lifecycle.ViewModelProvider;
 
 import com.example.fitsoc.R;
@@ -40,7 +39,6 @@ import com.example.fitsoc.data.RandomTarget;
 import com.example.fitsoc.data.RunningData;
 import com.example.fitsoc.data.model.DailyTask;
 import com.example.fitsoc.data.model.FitTask;
-import com.example.fitsoc.data.model.TaskList;
 import com.example.fitsoc.databinding.FragmentRunBinding;
 import com.google.android.gms.auth.api.signin.GoogleSignIn;
 import com.google.android.gms.auth.api.signin.GoogleSignInAccount;
@@ -62,7 +60,6 @@ import com.google.android.gms.location.LocationRequest;
 import com.google.android.gms.location.LocationResult;
 import com.google.android.gms.location.LocationServices;
 import com.google.android.gms.location.LocationSettingsRequest;
-import com.google.android.gms.location.LocationSettingsResponse;
 import com.google.android.gms.location.SettingsClient;
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
@@ -76,9 +73,9 @@ import com.google.android.gms.maps.model.Polyline;
 import com.google.android.gms.maps.model.PolylineOptions;
 import com.google.android.gms.tasks.CancellationToken;
 import com.google.android.gms.tasks.OnTokenCanceledListener;
-import com.google.android.gms.tasks.Task;
 import com.google.android.material.snackbar.Snackbar;
 import com.google.firebase.firestore.FirebaseFirestore;
+import com.google.firebase.firestore.Query;
 import com.google.firebase.firestore.QueryDocumentSnapshot;
 
 import java.io.IOException;
@@ -149,6 +146,7 @@ public class RunFragment extends Fragment implements OnMapReadyCallback,
     private FitTask distanceTask;
     private FitTask timeTask;
     private RandomTarget target;
+    String userID = "rua";
 
     private boolean isStartRunning = false;
     private boolean firstRun = true;//this is for run before stop
@@ -446,7 +444,7 @@ public class RunFragment extends Fragment implements OnMapReadyCallback,
         requestingLocationUpdates = true;
         isStartRunning = true;
         timerHandler.postDelayed(timerRunnable, 0);
-        Float color;
+        float color;
         if(!isRunningCont) {
             color = BitmapDescriptorFactory.HUE_VIOLET;
         }
@@ -533,11 +531,15 @@ public class RunFragment extends Fragment implements OnMapReadyCallback,
         if (distanceTask.isAccepted && !distanceTask.isCompleted) {
             if (totalDistance >= distanceTask.value) {
                 distanceTask.isCompleted = true;
+                Toast.makeText(getContext(), "Distance Task accomplished!", Toast.LENGTH_LONG)
+                        .show();
             }
         }
         if (timeTask.isAccepted && !distanceTask.isCompleted) {
             if (totalTime >= timeTask.value) {
                 timeTask.isCompleted = true;
+                Toast.makeText(getContext(), "Time Task accomplished!", Toast.LENGTH_LONG)
+                        .show();
             }
         }
         RunningData data = new RunningData();
@@ -580,6 +582,29 @@ public class RunFragment extends Fragment implements OnMapReadyCallback,
         }
 
         // TODO Ranks left
+        FirebaseFirestore db = FirebaseFirestore.getInstance();
+        db.collection("events")
+                .whereEqualTo("date", generateDateString())
+                .orderBy("distance", Query.Direction.DESCENDING)
+                .get()
+                .addOnCompleteListener(task -> {
+                    if (task.isSuccessful()) {
+                        if (task.getResult().isEmpty()) {
+                            Log.d(TAG, "No getting documents: ", task.getException());
+                        } else {
+                            int rank = 0;
+                            for (QueryDocumentSnapshot document : task.getResult()) {
+                                rank++;
+                                Log.d(TAG, document.getId() + " => " + document.getData());
+                                if (document.getData().get("userID").equals(userID)) {
+                                    binding.rank.setText("Current Rank: " + rank);
+                                }
+                            }
+                        }
+                    } else {
+                        Log.d(TAG, "Error getting documents: ", task.getException());
+                    }
+                });
     }
 
     private void setBtnListeners() {
@@ -661,13 +686,7 @@ public class RunFragment extends Fragment implements OnMapReadyCallback,
 
     private final ActivityResultLauncher<String> requestPermissionLauncher =
             registerForActivityResult(new ActivityResultContracts.RequestPermission(), isGranted -> {
-                if (isGranted) {
-                    // TODO Can add some operations here?
-                    locationPermissionGranted = true;
-                } else {
-                    // TODO Can add some operations here?
-                    locationPermissionGranted = false;
-                }
+                locationPermissionGranted = isGranted;
             });
 
     private void createLocationRequest() {
@@ -678,7 +697,8 @@ public class RunFragment extends Fragment implements OnMapReadyCallback,
         locationRequest.setPriority(LocationRequest.PRIORITY_HIGH_ACCURACY);
         builder = new LocationSettingsRequest.Builder().addLocationRequest(locationRequest);
         SettingsClient client = LocationServices.getSettingsClient(requireActivity());
-        Task<LocationSettingsResponse> task = client.checkLocationSettings(builder.build());
+//        Task<LocationSettingsResponse> task =
+        client.checkLocationSettings(builder.build());
         // TODO some listeners can be set for task?
     }
 
@@ -705,6 +725,8 @@ public class RunFragment extends Fragment implements OnMapReadyCallback,
                 if (targetTask.isAccepted && !targetTask.isCompleted) {
                     if (target.isAtTargetLocation(location)) {
                         targetTask.isCompleted = true;
+                        Toast.makeText(getContext(), "Reached the target point!", Toast.LENGTH_LONG)
+                                .show();
                     }
                 }
                 LatLng nowLatLng = new LatLng(location.getLatitude(), location.getLongitude());
@@ -762,7 +784,7 @@ public class RunFragment extends Fragment implements OnMapReadyCallback,
             String dateString = (String) data.get("date");
             String userIDString = (String) data.get("userID");
             ArrayList<FitTask> fitTasks = new ArrayList<>();
-            if ((HashMap<String, Object>) data.get("simpleTask") != null) {
+            if (data.get("simpleTask") != null) {
                 HashMap<String, Object> simpleTaskMap = (HashMap<String, Object>) data.get("simpleTask");
                 String simpleType = (String) simpleTaskMap.get("type");
                 long simpleValue = (long) simpleTaskMap.get("value");
@@ -772,7 +794,7 @@ public class RunFragment extends Fragment implements OnMapReadyCallback,
                 FitTask simpleTask = new FitTask(simpleType, simpleValue, simpleLevel, simpleIsCompleted, simpleIsAccepted);
                 fitTasks.add(simpleTask);
             }
-            if ((HashMap<String, Object>) data.get("midTask") != null) {
+            if (data.get("midTask") != null) {
                 HashMap<String, Object> midTaskMap = (HashMap<String, Object>) data.get("midTask");
                 String midType = (String) midTaskMap.get("type");
                 long midValue = (long) midTaskMap.get("value");
@@ -782,7 +804,7 @@ public class RunFragment extends Fragment implements OnMapReadyCallback,
                 FitTask midTask = new FitTask(midType, midValue, midLevel, midIsCompleted, midIsAccepted);
                 fitTasks.add(midTask);
             }
-            if ((HashMap<String, Object>) data.get("hardTask") != null) {
+            if (data.get("hardTask") != null) {
                 HashMap<String, Object> hardTaskMap = (HashMap<String, Object>) data.get("hardTask");
                 String hardType = (String) hardTaskMap.get("type");
                 long hardValue = (long) hardTaskMap.get("value");
@@ -823,7 +845,7 @@ public class RunFragment extends Fragment implements OnMapReadyCallback,
         });
         AlertDialog dialog = builder.create();
         FirebaseFirestore db = FirebaseFirestore.getInstance();
-        String userID = "rua";
+
         db.collection("dailyTasks")
                 .whereEqualTo("userID", userID)
                 .whereEqualTo("date", generateDateString())
@@ -851,10 +873,7 @@ public class RunFragment extends Fragment implements OnMapReadyCallback,
                                 Map<String, Object> data = document.getData();
                                 generateDailyTask(data);
 
-
-
                                 int radius;
-                                boolean hasTargetTask = false;
                                 targetTask = dailyTask.findTargetTask();
                                 distanceTask = dailyTask.findDistanceTask();
                                 timeTask = dailyTask.findTimeTask();
@@ -889,7 +908,7 @@ public class RunFragment extends Fragment implements OnMapReadyCallback,
                 });
     }
 
-    private CancellationToken cancellationToken = new CancellationToken() {
+    private final CancellationToken cancellationToken = new CancellationToken() {
         //  TODO ??? here
         @Override
         public boolean isCancellationRequested() {

@@ -19,6 +19,7 @@ public class RandomTarget {
         targetLocation = null;
     }
 
+    // generate a near marker
     public RandomTarget(Location currentLocation, double radius) {
         this();
 
@@ -46,10 +47,6 @@ public class RandomTarget {
     }
 
 
-    public boolean isCompleted() {
-        return completedStatus;
-    }
-
     public Location getTargetLocation() {
         return targetLocation;
     }
@@ -59,12 +56,12 @@ public class RandomTarget {
     }
 
     public float calculateDistance(Location location) {
-        Log.d("Distance: ", String.valueOf(targetLocation.distanceTo(location)));
+        Log.d("Distance to Target: -----> ", String.valueOf(targetLocation.distanceTo(location)));
         return targetLocation.distanceTo(location);
     }
 
     public boolean isAtTargetLocation(Location location) {
-        if (calculateDistance(location) < 0.01) {
+        if (calculateDistance(location) < 15) {
             taskAccomplished();
             return true;
         } else return false;

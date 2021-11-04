@@ -30,6 +30,12 @@
         tools:layout="@layout/fragment_history" />
 
     <fragment
+        android:id="@+id/nav_rank"
+        android:name="com.example.fitsoc.ui.rank.RankFragment"
+        android:label="@string/menu_rank"
+        tools:layout="@layout/fragment_rank" />
+
+    <fragment
         android:id="@+id/nav_profile"
         android:name="com.example.fitsoc.ui.profile.ProfileFragment"
         android:label="@string/menu_profile"
