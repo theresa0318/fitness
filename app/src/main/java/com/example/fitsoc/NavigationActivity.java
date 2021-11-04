@@ -41,6 +41,7 @@ public class NavigationActivity extends AppCompatActivity {
 
     private AppBarConfiguration mAppBarConfiguration;
     private ActivityNavigationBinding binding;
+    /*
     private FirebaseAuth mAuth;
     private FirebaseUser user;
     private FirebaseDatabase db;
@@ -49,6 +50,7 @@ public class NavigationActivity extends AppCompatActivity {
     private static final String DEFAULT_IMAGE_URL="@drawable/profile_icon";
     private TextView username_nav;
     private ImageView image_nav;
+
 
     private class DownloadImageTask extends AsyncTask<String, Void, Bitmap> {
         ImageView bmImage;
@@ -75,6 +77,8 @@ public class NavigationActivity extends AppCompatActivity {
         }
     }
 
+     */
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -96,16 +100,17 @@ public class NavigationActivity extends AppCompatActivity {
         NavigationUI.setupActionBarWithNavController(this, navController, mAppBarConfiguration);
         NavigationUI.setupWithNavController(navigationView, navController);
 
+        /*
         mAuth = FirebaseAuth.getInstance();
         user = mAuth.getCurrentUser();
         db = FirebaseDatabase.getInstance();
         reference = FirebaseDatabase.getInstance().getReference().child("users");
         String userID = user.getEmail().replace('.', ',');
 
-        username_nav = (TextView) findViewById(R.id.username_nav);
+        //username_nav = (TextView) findViewById(R.id.username_nav);
         image_nav = (ImageView) findViewById(R.id.imageView);
 
-        username_nav.setText(user.getEmail());
+        //username_nav.setText(user.getEmail());
 
         reference.child(userID).addListenerForSingleValueEvent(new ValueEventListener() {
             @SuppressLint("SetTextI18n")
@@ -130,8 +135,10 @@ public class NavigationActivity extends AppCompatActivity {
         } else {
             image_nav.setImageResource(R.mipmap.ic_launcher_round);
         }
-
+     */
     }
+
+
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
