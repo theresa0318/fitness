@@ -78,8 +78,14 @@ public class HistoryFragment extends Fragment {
         }
         long duration = Math.round((long) data.get("duration") / 1000);
         String durationString = "" + duration;
-        binding.textTime.setText("Time: " + durationString + " min");
+        binding.textTime.setText("Time: " + durationString + " Min");
         binding.textRank.setText("Rank: " + rank);
+    }
+
+    private void updateUIForNoFit() {
+        binding.textDistance.setText("Distance: 0 M");
+        binding.textRank.setText("Rank: Unknown");
+        binding.textTime.setText("Time: 0 Min");
     }
 
 
@@ -93,15 +99,19 @@ public class HistoryFragment extends Fragment {
                     if (task.isSuccessful()) {
                         if (task.getResult().isEmpty()) {
                             Log.d(TAG, "No getting documents: ", task.getException());
+                            updateUIForNoFit();
                         } else {
                             int rank = 0;
+                            boolean hasRecord = false;
                             for (QueryDocumentSnapshot document : task.getResult()) {
                                 rank++;
                                 Log.d(TAG, document.getId() + " => " + document.getData());
                                 if (document.getData().get("userID").equals(userID)) {
                                     updateUI(document.getData(), rank);
+                                    hasRecord = true;
                                 }
                             }
+                            if (!hasRecord) updateUIForNoFit();
                         }
                     } else {
                         Log.d(TAG, "Error getting documents: ", task.getException());

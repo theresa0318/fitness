@@ -81,6 +81,7 @@ public class ProfileFragment extends Fragment {
     private ImageButton divisionInfo;
     public Bitmap cameraImg;
     public Uri imageUri;
+    public Uri cameraUri;
     private FirebaseAuth mAuth;
     private FirebaseUser user;
     private FirebaseDatabase db;
@@ -97,6 +98,8 @@ public class ProfileFragment extends Fragment {
     public static final int CAMERA_PERM_CODE = 101;
     public static final int CAMERA_REQUEST_CODE = 102;
     public static final int GALLERY_REQUEST_CODE = 103;
+    public static final int CODE_RESULT_REQUEST1 = 104;
+    public static final int CODE_RESULT_REQUEST2 = 105;
     /*headShot size*/
     private static int head_output_x = 150;
     private static int head_output_y = 150;
@@ -140,12 +143,14 @@ public class ProfileFragment extends Fragment {
 
         String userID;
         mAuth = FirebaseAuth.getInstance();
+        /*
         if (Global.getUserID() == null) {
             user = mAuth.getCurrentUser();
             userID = user.getEmail().replace('.', ',');
         } else {
             userID = Global.getUserID().replace('.', ',');
-        }
+        }*/
+        userID = Global.getUserID().replace('.', ',');
 
         db = FirebaseDatabase.getInstance();
         reference = FirebaseDatabase.getInstance().getReference().child("users");
@@ -273,92 +278,24 @@ public class ProfileFragment extends Fragment {
         super.onActivityResult(requestCode, resultCode, data);
         if (requestCode == GALLERY_REQUEST_CODE && resultCode == RESULT_OK && data != null && data.getData() != null){
             imageUri = data.getData();
-            profileAvatar.setImageURI(imageUri);
-            uploadGalleryPicture();
+            cropGalleryPhoto(imageUri, 1, 1, head_output_x, head_output_y);
         }
         if (requestCode == CAMERA_REQUEST_CODE && resultCode == RESULT_OK && data != null && data.getExtras() != null && data.getExtras().get("data") != null) {
             cameraImg = (Bitmap) data.getExtras().get("data");
-            profileAvatar.setImageBitmap(cameraImg);
+            cameraUri = Uri.parse(MediaStore.Images.Media.insertImage(requireContext().getContentResolver(), cameraImg, null,null));
+            cropCameraPhoto(cameraUri, 1, 1, head_output_x, head_output_y);
+        }
+        if (requestCode == CODE_RESULT_REQUEST1 && resultCode == RESULT_OK && data != null && data.getData() != null) {
+            imageUri = data.getData();
+            profileAvatar.setImageURI(imageUri);
+            uploadGalleryPicture();
+        }
+        if (requestCode == CODE_RESULT_REQUEST2 && resultCode == RESULT_OK && data != null && data.getExtras() != null && data.getExtras().get("data") != null) {
+            cameraImg = (Bitmap) data.getExtras().get("data");
+            cameraUri = Uri.parse(MediaStore.Images.Media.insertImage(requireContext().getContentResolver(), cameraImg, null,null));
+            profileAvatar.setImageURI(cameraUri);
             uploadCameraPicture();
         }
-    }
-
-    private void uploadCameraPicture(){
-        final ProgressDialog pd = new ProgressDialog(getContext());
-        pd.setTitle("Uploading");
-        pd.show();
-
-        //final String randomKey = UUID.randomUUID().toString();
-
-        StorageReference riversRef = storageReference.child("images/" + username);
-        Uri cameraUri = Uri.parse(MediaStore.Images.Media.insertImage(requireContext().getContentResolver(), cameraImg, null,null));
-        cropPhoto(cameraUri, 1, 1, head_output_x, head_output_y);
-        UploadTask uploadTask = riversRef.putFile(cameraUri);
-        uploadTask.addOnSuccessListener(new OnSuccessListener<UploadTask.TaskSnapshot>() {
-            @Override
-            public void onSuccess(UploadTask.TaskSnapshot taskSnapshot) {
-                pd.dismiss();
-
-                final StorageReference ref = storage.getReference().child("images/"+username);
-
-                Task<Uri> urlTask = uploadTask.continueWithTask(new Continuation<UploadTask.TaskSnapshot, Task<Uri>>() {
-                    @Override
-                    public Task<Uri> then(@NonNull Task<UploadTask.TaskSnapshot> task) throws Exception {
-                        if (!task.isSuccessful()) {
-                            throw task.getException();
-                        }
-                        // Log.d(TAG, "Get download url");
-                        // Continue with the task to get the download URL
-                        return ref.getDownloadUrl();
-                    }
-                }).addOnCompleteListener(new OnCompleteListener<Uri>() {
-                    @Override
-                    public void onComplete(@NonNull Task<Uri> task) {
-                        if (task.isSuccessful()) {
-                            Uri downloadUri = task.getResult();
-                            imageUrl = String.valueOf(downloadUri);
-                            //updatedUser.setImageUrl(imageUrl);
-                            Log.d(TAG, imageUrl);
-
-                            DatabaseReference userRef = db.getReference().child("users").child(username.replace(".", ","));
-                            Map<String, Object> userUpdate = new HashMap<>();
-                            userUpdate.put("imageUrl", imageUrl);
-                            userRef.updateChildren(userUpdate,new DatabaseReference.CompletionListener() {
-                                @Override
-                                public void onComplete(DatabaseError databaseError, DatabaseReference databaseReference) {
-                                    if (databaseError != null) {
-                                        Log.w(TAG, "uploadImageUrl:failure");
-                                        Toast.makeText(getActivity(), "Fail to upload profile image! Please try again.",
-                                                Toast.LENGTH_SHORT).show();
-                                    } else {
-                                        Log.d(TAG, "uploadImageUrl:success");
-                                        Toast.makeText(getActivity(), "You have uploaded your profile image successfully.", Toast.LENGTH_SHORT).show();
-                                    }
-                                }
-                            });
-
-                            //db.getReference().child("users").child(updatedUser.getUserId().replace(".", ",")).setValue(updatedUser);
-                        } else {
-                            Log.w(TAG, "getImageUrl:failure");
-                            Toast.makeText(getActivity(), "Fail to upload profile image! Please try again.",
-                                    Toast.LENGTH_SHORT).show();
-                        }
-                    }
-                });
-            }
-        }).addOnFailureListener(new OnFailureListener() {
-            @Override
-            public void onFailure(@NonNull Exception e) {
-                pd.dismiss();
-                Toast.makeText(getContext(), "Fail to upload profile image! Please try again.", Toast.LENGTH_SHORT).show();
-            }
-        }).addOnProgressListener(new OnProgressListener<UploadTask.TaskSnapshot>() {
-            @Override
-            public void onProgress(@NonNull UploadTask.TaskSnapshot taskSnapshot) {
-                double progressPercent = (100.00* taskSnapshot.getBytesTransferred() /taskSnapshot.getTotalByteCount());
-                pd.setMessage("progress: " + (int)progressPercent + "%");
-            }
-        });
     }
 
     private void uploadGalleryPicture() {
@@ -369,7 +306,6 @@ public class ProfileFragment extends Fragment {
         //final String randomKey = UUID.randomUUID().toString();
 
         StorageReference riversRef = storageReference.child("images/" + username);
-        cropPhoto(imageUri, 1, 1, head_output_x, head_output_y);
         UploadTask uploadTask = riversRef.putFile(imageUri);
         uploadTask.addOnSuccessListener(new OnSuccessListener<UploadTask.TaskSnapshot>() {
             @Override
@@ -449,8 +385,84 @@ public class ProfileFragment extends Fragment {
         });
     }
 
+    private void uploadCameraPicture(){
+        final ProgressDialog pd = new ProgressDialog(getContext());
+        pd.setTitle("Uploading");
+        pd.show();
+
+        //final String randomKey = UUID.randomUUID().toString();
+
+        StorageReference riversRef = storageReference.child("images/" + username);
+        UploadTask uploadTask = riversRef.putFile(cameraUri);
+        uploadTask.addOnSuccessListener(new OnSuccessListener<UploadTask.TaskSnapshot>() {
+            @Override
+            public void onSuccess(UploadTask.TaskSnapshot taskSnapshot) {
+                pd.dismiss();
+
+                final StorageReference ref = storage.getReference().child("images/"+username);
+
+                Task<Uri> urlTask = uploadTask.continueWithTask(new Continuation<UploadTask.TaskSnapshot, Task<Uri>>() {
+                    @Override
+                    public Task<Uri> then(@NonNull Task<UploadTask.TaskSnapshot> task) throws Exception {
+                        if (!task.isSuccessful()) {
+                            throw task.getException();
+                        }
+                        // Log.d(TAG, "Get download url");
+                        // Continue with the task to get the download URL
+                        return ref.getDownloadUrl();
+                    }
+                }).addOnCompleteListener(new OnCompleteListener<Uri>() {
+                    @Override
+                    public void onComplete(@NonNull Task<Uri> task) {
+                        if (task.isSuccessful()) {
+                            Uri downloadUri = task.getResult();
+                            imageUrl = String.valueOf(downloadUri);
+                            //updatedUser.setImageUrl(imageUrl);
+                            Log.d(TAG, imageUrl);
+
+                            DatabaseReference userRef = db.getReference().child("users").child(username.replace(".", ","));
+                            Map<String, Object> userUpdate = new HashMap<>();
+                            userUpdate.put("imageUrl", imageUrl);
+                            userRef.updateChildren(userUpdate,new DatabaseReference.CompletionListener() {
+                                @Override
+                                public void onComplete(DatabaseError databaseError, DatabaseReference databaseReference) {
+                                    if (databaseError != null) {
+                                        Log.w(TAG, "uploadImageUrl:failure");
+                                        Toast.makeText(getActivity(), "Fail to upload profile image! Please try again.",
+                                                Toast.LENGTH_SHORT).show();
+                                    } else {
+                                        Log.d(TAG, "uploadImageUrl:success");
+                                        Toast.makeText(getActivity(), "You have uploaded your profile image successfully.", Toast.LENGTH_SHORT).show();
+                                    }
+                                }
+                            });
+
+                            //db.getReference().child("users").child(updatedUser.getUserId().replace(".", ",")).setValue(updatedUser);
+                        } else {
+                            Log.w(TAG, "getImageUrl:failure");
+                            Toast.makeText(getActivity(), "Fail to upload profile image! Please try again.",
+                                    Toast.LENGTH_SHORT).show();
+                        }
+                    }
+                });
+            }
+        }).addOnFailureListener(new OnFailureListener() {
+            @Override
+            public void onFailure(@NonNull Exception e) {
+                pd.dismiss();
+                Toast.makeText(getContext(), "Fail to upload profile image! Please try again.", Toast.LENGTH_SHORT).show();
+            }
+        }).addOnProgressListener(new OnProgressListener<UploadTask.TaskSnapshot>() {
+            @Override
+            public void onProgress(@NonNull UploadTask.TaskSnapshot taskSnapshot) {
+                double progressPercent = (100.00* taskSnapshot.getBytesTransferred() /taskSnapshot.getTotalByteCount());
+                pd.setMessage("progress: " + (int)progressPercent + "%");
+            }
+        });
+    }
+
     /*crop original photo*/
-    public void cropPhoto(Uri uri, int aspect_x, int aspect_y, int output_x, int output_y){
+    public void cropGalleryPhoto(Uri uri, int aspect_x, int aspect_y, int output_x, int output_y){
         Intent intent = new Intent("com.android.camera.action.CROP");
         intent.setDataAndType(uri, "image/*");
         // setting crop
@@ -462,7 +474,23 @@ public class ProfileFragment extends Fragment {
         intent.putExtra("output_x", output_x);
         intent.putExtra("output_y", output_y);
         intent.putExtra("return-data", true);
-//        startActivityForResult(intent, CODE_RESULT_REQUEST);
+        startActivityForResult(intent, CODE_RESULT_REQUEST1);
+    }
+
+    /*crop original photo*/
+    public void cropCameraPhoto(Uri uri, int aspect_x, int aspect_y, int output_x, int output_y){
+        Intent intent = new Intent("com.android.camera.action.CROP");
+        intent.setDataAndType(uri, "image/*");
+        // setting crop
+        intent.putExtra("crop", "true");
+        // image proportion
+        intent.putExtra("aspect_x", aspect_x);
+        intent.putExtra("aspect_y", aspect_y);
+        // image width & height
+        intent.putExtra("output_x", output_x);
+        intent.putExtra("output_y", output_y);
+        intent.putExtra("return-data", true);
+        startActivityForResult(intent, CODE_RESULT_REQUEST2);
     }
 
     public void showDivisionInfo () {

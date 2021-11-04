@@ -1,6 +1,7 @@
 //Referenced from https://gist.github.com/joshdholtz/4522551
 package com.example.fitsoc.ui.run;
 
+import static android.content.ContentValues.TAG;
 import static com.google.android.gms.location.LocationRequest.PRIORITY_HIGH_ACCURACY;
 
 import android.Manifest;
@@ -73,8 +74,14 @@ import com.google.android.gms.maps.model.MarkerOptions;
 import com.google.android.gms.maps.model.Polyline;
 import com.google.android.gms.maps.model.PolylineOptions;
 import com.google.android.gms.tasks.CancellationToken;
+import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.OnTokenCanceledListener;
+import com.google.android.gms.tasks.Task;
 import com.google.android.material.snackbar.Snackbar;
+import com.google.firebase.database.DataSnapshot;
+import com.google.firebase.database.DatabaseError;
+import com.google.firebase.database.DatabaseReference;
+import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.Query;
 import com.google.firebase.firestore.QueryDocumentSnapshot;
@@ -170,7 +177,7 @@ public class RunFragment extends Fragment implements OnMapReadyCallback,
         if (!locationPermissionGranted) getLocationPermission();
         if (!recognitionPermissionGranted) getRecognitionPermission();
         model = new ViewModelProvider(this).get(RunViewModel.class);
-        userID = ((Global)this.getActivity().getApplication()).getUserID();
+        userID = Global.getUserID();
 
     }
 
@@ -539,13 +546,15 @@ public class RunFragment extends Fragment implements OnMapReadyCallback,
         if (hasTask) {
             if (distanceTask.isAccepted && !distanceTask.isCompleted) {
                 if (totalDistance >= distanceTask.value) {
+                    Global.setFitPoint(Global.getFitPoint()+distanceTask.getPoints());
                     distanceTask.isCompleted = true;
                     Toast.makeText(getContext(), "Distance Task accomplished!", Toast.LENGTH_LONG)
                             .show();
                 }
             }
-            if (timeTask.isAccepted && !distanceTask.isCompleted) {
+            if (timeTask.isAccepted && !timeTask.isCompleted) {
                 if (totalTime >= (long) timeTask.value * 60 * 1000) {
+                    Global.setFitPoint(Global.getFitPoint()+timeTask.getPoints());
                     timeTask.isCompleted = true;
                     Toast.makeText(getContext(), "Time Task accomplished!", Toast.LENGTH_LONG)
                             .show();
@@ -563,7 +572,34 @@ public class RunFragment extends Fragment implements OnMapReadyCallback,
         FitEvent event = new FitEvent(data);
         data.writeToDatabase();
         event.writeToDatabase();
-        if (hasTask) dailyTask.writeToDatabase();
+        if (hasTask) {
+            Global.setDailyTask(dailyTask);
+            dailyTask.writeToDatabase();
+            DatabaseReference mDatabase = FirebaseDatabase.getInstance().getReference();
+            mDatabase.child("users").child(userID.replace(".", ",")).get().addOnCompleteListener(task -> {
+                if (!task.isSuccessful()) {
+                    Log.e("firebase", "Error getting data", task.getException());
+                } else {
+                    Log.d("firebase", String.valueOf(task.getResult().getValue()));
+                    Map<String, Object> map = (Map<String, Object>) task.getResult().getValue();
+                    long originalPoints = (long) map.get("points");
+                    long newPoints = originalPoints + Global.getFitPoint();
+
+                    Map<String, Object> userUpdate = new HashMap<>();
+                    userUpdate.put("points", newPoints);
+                    mDatabase.child("users").child(userID.replace(".", ",")).updateChildren(userUpdate, (databaseError, databaseReference) -> {
+                        if (databaseError != null) {
+                            Log.w(TAG, "points error");
+                            Toast.makeText(getActivity(), "Fail to update points! Please try again.",
+                                    Toast.LENGTH_SHORT).show();
+                        } else {
+                            Log.d(TAG, "update points:success");
+                            Global.setFitPoint(0);
+                        }
+                    });
+                }
+            });
+        }
     }
 
     @SuppressLint("SetTextI18n")
@@ -736,6 +772,7 @@ public class RunFragment extends Fragment implements OnMapReadyCallback,
                     if (targetTask.isAccepted && !targetTask.isCompleted) {
                         if (target.isAtTargetLocation(location)) {
                             targetTask.isCompleted = true;
+                            Global.setFitPoint(Global.getFitPoint()+targetTask.getPoints());
                             targetMarker.remove();
                             Toast.makeText(getContext(), "Reached the target point!", Toast.LENGTH_LONG)
                                     .show();
@@ -909,6 +946,20 @@ public class RunFragment extends Fragment implements OnMapReadyCallback,
                                         public void onFinish() {
                                             dialog.show();
                                         }
+                                        @Override
+                                        public void onCancel() {
+
+                                        }
+                                    });
+                                } else {
+                                    LatLng nowLatLng = new LatLng(lastKnownLocation.getLatitude(), lastKnownLocation.getLongitude());
+                                    map.animateCamera(CameraUpdateFactory.newLatLngZoom(
+                                            nowLatLng, DEFAULT_ZOOM), 700, new GoogleMap.CancelableCallback() {
+                                        @Override
+                                        public void onFinish() {
+
+                                        }
+
                                         @Override
                                         public void onCancel() {
 
