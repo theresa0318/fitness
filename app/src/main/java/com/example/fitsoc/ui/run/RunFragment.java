@@ -532,7 +532,10 @@ public class RunFragment extends Fragment implements OnMapReadyCallback,
         long totalDistance = distances.stream().mapToLong(distance -> distance).sum();
         Toast.makeText(requireContext(), "Distance: " + totalDistance, Toast.LENGTH_SHORT).show();
         OptionalDouble avgSpeed = speeds.stream().mapToLong(speed -> speed).average();
-        Toast.makeText(requireContext(), "Speed: " + avgSpeed.getAsDouble(), Toast.LENGTH_SHORT).show();
+        double avgSpeedDouble;
+        if (avgSpeed.isPresent()) avgSpeedDouble = avgSpeed.getAsDouble();
+        else avgSpeedDouble = 0;
+        Toast.makeText(requireContext(), "Speed: " + avgSpeedDouble, Toast.LENGTH_SHORT).show();
         if (hasTask) {
             if (distanceTask.isAccepted && !distanceTask.isCompleted) {
                 if (totalDistance >= distanceTask.value) {
