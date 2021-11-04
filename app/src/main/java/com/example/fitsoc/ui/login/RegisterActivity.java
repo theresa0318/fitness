@@ -59,11 +59,6 @@ public class RegisterActivity extends AppCompatActivity implements OnClickListen
         drawable_register_email.setBounds(0, 0, 100, 100);
         button_register_email.setCompoundDrawables(drawable_register_email, null, null, null);
 
-        Button button_register_wechat = (Button) findViewById(R.id.register_wechat);
-        Drawable drawable_register_wechat = getResources().getDrawable(R.drawable.wechat_icon);
-        drawable_register_wechat.setBounds(0, 0, 100, 100);
-        button_register_wechat.setCompoundDrawables(drawable_register_wechat, null, null, null);
-
         //EditText usernameLoginEditText = (EditText) findViewById(R.id.username_register);
         //EditText passwordLoginEditText = (EditText) findViewById(R.id.password_register);
 

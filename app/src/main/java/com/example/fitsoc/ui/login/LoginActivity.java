@@ -57,11 +57,6 @@ public class LoginActivity extends AppCompatActivity implements View.OnClickList
         drawable_login_email.setBounds(0, 0, 100, 100);
         button_login_email.setCompoundDrawables(drawable_login_email, null, null, null);
 
-        Button button_login_wechat = (Button) findViewById(R.id.login_wechat);
-        Drawable drawable_login_wechat = getResources().getDrawable(R.drawable.wechat_icon);
-        drawable_login_wechat.setBounds(0, 0, 100, 100);
-        button_login_wechat.setCompoundDrawables(drawable_login_wechat, null, null, null);
-
         loginViewModel = new ViewModelProvider(this, new LoginViewModelFactory())
                 .get(LoginViewModel.class);
 
