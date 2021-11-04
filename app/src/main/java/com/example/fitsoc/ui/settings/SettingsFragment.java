@@ -18,6 +18,7 @@ import com.example.fitsoc.NavigationActivity;
 import com.example.fitsoc.R;
 import com.example.fitsoc.data.model.RegisteredUser;
 import com.example.fitsoc.databinding.ActivityLoginBinding;
+import com.example.fitsoc.ui.Global;
 import com.example.fitsoc.ui.login.LoginActivity;
 import com.example.fitsoc.ui.login.RegisterActivity;
 import com.example.fitsoc.ui.profile.ProfileFragment;
@@ -49,6 +50,7 @@ public class SettingsFragment extends Fragment implements View.OnClickListener {
     private FirebaseAuth mAuth;
     private FirebaseUser user;
     private static final int DEFAULT_VALUE = 0;
+    private String userID;
 
 
     //只完成了radio button的UI部分，将信息录入database的部分待补充
@@ -71,8 +73,14 @@ public class SettingsFragment extends Fragment implements View.OnClickListener {
 
        newPasswordText.setText("");
 
-       mAuth = FirebaseAuth.getInstance();
-       user = mAuth.getCurrentUser();
+
+       if (Global.getUserID() == null) {
+           mAuth = FirebaseAuth.getInstance();
+           user = mAuth.getCurrentUser();
+           userID = user.getEmail();
+       } else {
+           userID = Global.getUserID();
+       }
 
        return settingView;
     }
@@ -127,7 +135,7 @@ public class SettingsFragment extends Fragment implements View.OnClickListener {
         FirebaseDatabase database = FirebaseDatabase.getInstance();
         //Log.d(TAG, user.getEmail());
         DatabaseReference usersRef = database.getReference().child("users");
-        DatabaseReference userRef = usersRef.child(user.getEmail().replace(".", ","));
+        DatabaseReference userRef = usersRef.child(userID.replace(".", ","));
         Map<String, Object> userUpdates = new HashMap<>();
         if (!gender.equals("")) {
             userUpdates.put("gender", gender);

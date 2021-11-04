@@ -36,6 +36,7 @@ import androidx.fragment.app.Fragment;
 
 import com.example.fitsoc.R;
 import com.example.fitsoc.data.model.RegisteredUser;
+import com.example.fitsoc.ui.Global;
 import com.example.fitsoc.ui.login.RegisterActivity;
 import com.google.android.gms.tasks.Continuation;
 import com.google.android.gms.tasks.OnCompleteListener;
@@ -127,12 +128,17 @@ public class ProfileFragment extends Fragment {
                              Bundle savedInstanceState) {
         // Inflate the layout for this fragment
         View profileView = inflater.inflate(R.layout.fragment_profile, container, false);
-
+        String userID;
         mAuth = FirebaseAuth.getInstance();
-        user = mAuth.getCurrentUser();
+        if (Global.getUserID() == null) {
+            user = mAuth.getCurrentUser();
+            userID = user.getEmail().replace('.', ',');
+        } else {
+            userID = Global.getUserID().replace('.', ',');
+        }
+
         db = FirebaseDatabase.getInstance();
         reference = FirebaseDatabase.getInstance().getReference().child("users");
-        String userID = user.getEmail().replace('.', ',');
 
         storage = FirebaseStorage.getInstance();
         storageReference = storage.getReference();
