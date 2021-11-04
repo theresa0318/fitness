@@ -133,12 +133,14 @@ public class ProfileFragment extends Fragment {
         View profileView = inflater.inflate(R.layout.fragment_profile, container, false);
         String userID;
         mAuth = FirebaseAuth.getInstance();
+        /*
         if (Global.getUserID() == null) {
             user = mAuth.getCurrentUser();
             userID = user.getEmail().replace('.', ',');
         } else {
             userID = Global.getUserID().replace('.', ',');
-        }
+        }*/
+        userID = Global.getUserID().replace('.', ',');
 
         db = FirebaseDatabase.getInstance();
         reference = FirebaseDatabase.getInstance().getReference().child("users");
