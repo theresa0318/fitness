@@ -560,7 +560,7 @@ public class RunFragment extends Fragment implements OnMapReadyCallback,
         FitEvent event = new FitEvent(data);
         data.writeToDatabase();
         event.writeToDatabase();
-        dailyTask.writeToDatabase();
+        if (hasTask) dailyTask.writeToDatabase();
     }
 
     @SuppressLint("SetTextI18n")
