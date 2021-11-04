@@ -3,6 +3,7 @@ package com.example.fitsoc.data;
 import android.location.Location;
 import android.util.Log;
 
+import com.example.fitsoc.ui.Global;
 import com.google.firebase.firestore.FirebaseFirestore;
 
 import java.sql.Timestamp;

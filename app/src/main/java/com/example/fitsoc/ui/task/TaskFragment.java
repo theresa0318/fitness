@@ -20,6 +20,7 @@ import com.example.fitsoc.R;
 import com.example.fitsoc.data.model.DailyTask;
 import com.example.fitsoc.data.model.FitTask;
 import com.example.fitsoc.data.model.TaskList;
+import com.example.fitsoc.ui.Global;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.QueryDocumentSnapshot;
 
@@ -49,7 +50,7 @@ public class TaskFragment extends Fragment {
         });
         dialog = builder.create();
         FirebaseFirestore db = FirebaseFirestore.getInstance();
-        String userID = "rua";
+        String userID = ((Global)this.getActivity().getApplication()).getUserID();
         db.collection("dailyTasks")
                 .whereEqualTo("userID", userID)
                 .whereEqualTo("date", generateDateString())

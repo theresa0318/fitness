@@ -5,9 +5,7 @@ import static com.google.android.gms.location.LocationRequest.PRIORITY_HIGH_ACCU
 
 import android.Manifest;
 import android.annotation.SuppressLint;
-import android.content.Context;
 import android.content.DialogInterface;
-import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.graphics.Color;
 import android.location.Address;
@@ -171,8 +169,6 @@ public class RunFragment extends Fragment implements OnMapReadyCallback,
         if (!locationPermissionGranted) getLocationPermission();
         if (!recognitionPermissionGranted) getRecognitionPermission();
         model = new ViewModelProvider(this).get(RunViewModel.class);
-
-
         userID = ((Global)this.getActivity().getApplication()).getUserID();
 
     }
@@ -544,13 +540,13 @@ public class RunFragment extends Fragment implements OnMapReadyCallback,
             }
         }
         if (timeTask.isAccepted && !distanceTask.isCompleted) {
-            if (totalTime >= timeTask.value) {
+            if (totalTime >= (long) timeTask.value * 60 * 1000) {
                 timeTask.isCompleted = true;
                 Toast.makeText(getContext(), "Time Task accomplished!", Toast.LENGTH_LONG)
                         .show();
             }
         }
-        RunningData data = new RunningData();
+        RunningData data = new RunningData(userID);
         data.setDistance(totalDistance);
         data.setSpeedAVG((long) avgSpeed.getAsDouble());
         data.setStartTime(new Timestamp(startTime));
