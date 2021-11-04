@@ -5,7 +5,9 @@ import static com.google.android.gms.location.LocationRequest.PRIORITY_HIGH_ACCU
 
 import android.Manifest;
 import android.annotation.SuppressLint;
+import android.content.Context;
 import android.content.DialogInterface;
+import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.graphics.Color;
 import android.location.Address;
@@ -40,6 +42,7 @@ import com.example.fitsoc.data.RunningData;
 import com.example.fitsoc.data.model.DailyTask;
 import com.example.fitsoc.data.model.FitTask;
 import com.example.fitsoc.databinding.FragmentRunBinding;
+import com.example.fitsoc.ui.Global;
 import com.google.android.gms.auth.api.signin.GoogleSignIn;
 import com.google.android.gms.auth.api.signin.GoogleSignInAccount;
 import com.google.android.gms.fitness.Fitness;
@@ -168,6 +171,10 @@ public class RunFragment extends Fragment implements OnMapReadyCallback,
         if (!locationPermissionGranted) getLocationPermission();
         if (!recognitionPermissionGranted) getRecognitionPermission();
         model = new ViewModelProvider(this).get(RunViewModel.class);
+
+
+        userID = ((Global)this.getActivity().getApplication()).getUserID();
+
     }
 
 

@@ -32,6 +32,7 @@ import androidx.lifecycle.ViewModelProvider;
 import com.example.fitsoc.NavigationActivity;
 import com.example.fitsoc.R;
 import com.example.fitsoc.databinding.ActivityLoginBinding;
+import com.example.fitsoc.ui.Global;
 import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.Task;
 import com.google.firebase.auth.AuthResult;
@@ -58,6 +59,8 @@ public class LoginActivity extends AppCompatActivity implements View.OnClickList
         mAuth = FirebaseAuth.getInstance();
 
         if(readFromSharedPref()){
+            ((Global)this.getApplication()).setUserID(userID);
+
             final EditText usernameLoginEditText = binding.usernameLogin;
             final EditText passwordLoginEditText = binding.passwordLogin;
             usernameLoginEditText.setText(userID);
