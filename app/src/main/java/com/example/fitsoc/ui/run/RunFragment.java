@@ -148,7 +148,8 @@ public class RunFragment extends Fragment implements OnMapReadyCallback,
     private FitTask distanceTask;
     private FitTask timeTask;
     private RandomTarget target;
-    String userID = "rua";
+    private String userID;
+    private boolean hasTask;
 
     private boolean isStartRunning = false;
     private boolean firstRun = true;//this is for run before stop
@@ -532,18 +533,20 @@ public class RunFragment extends Fragment implements OnMapReadyCallback,
         Toast.makeText(requireContext(), "Distance: " + totalDistance, Toast.LENGTH_SHORT).show();
         OptionalDouble avgSpeed = speeds.stream().mapToLong(speed -> speed).average();
         Toast.makeText(requireContext(), "Speed: " + avgSpeed.getAsDouble(), Toast.LENGTH_SHORT).show();
-        if (distanceTask.isAccepted && !distanceTask.isCompleted) {
-            if (totalDistance >= distanceTask.value) {
-                distanceTask.isCompleted = true;
-                Toast.makeText(getContext(), "Distance Task accomplished!", Toast.LENGTH_LONG)
-                        .show();
+        if (hasTask) {
+            if (distanceTask.isAccepted && !distanceTask.isCompleted) {
+                if (totalDistance >= distanceTask.value) {
+                    distanceTask.isCompleted = true;
+                    Toast.makeText(getContext(), "Distance Task accomplished!", Toast.LENGTH_LONG)
+                            .show();
+                }
             }
-        }
-        if (timeTask.isAccepted && !distanceTask.isCompleted) {
-            if (totalTime >= (long) timeTask.value * 60 * 1000) {
-                timeTask.isCompleted = true;
-                Toast.makeText(getContext(), "Time Task accomplished!", Toast.LENGTH_LONG)
-                        .show();
+            if (timeTask.isAccepted && !distanceTask.isCompleted) {
+                if (totalTime >= (long) timeTask.value * 60 * 1000) {
+                    timeTask.isCompleted = true;
+                    Toast.makeText(getContext(), "Time Task accomplished!", Toast.LENGTH_LONG)
+                            .show();
+                }
             }
         }
         RunningData data = new RunningData(userID);
@@ -726,12 +729,14 @@ public class RunFragment extends Fragment implements OnMapReadyCallback,
             for (Location location : locationResult.getLocations()) {
                 Log.d("Location Update: ", location.toString());
                 locationList.add(location);
-                if (targetTask.isAccepted && !targetTask.isCompleted) {
-                    if (target.isAtTargetLocation(location)) {
-                        targetTask.isCompleted = true;
-                        targetMarker.remove();
-                        Toast.makeText(getContext(), "Reached the target point!", Toast.LENGTH_LONG)
-                                .show();
+                if (hasTask) {
+                    if (targetTask.isAccepted && !targetTask.isCompleted) {
+                        if (target.isAtTargetLocation(location)) {
+                            targetTask.isCompleted = true;
+                            targetMarker.remove();
+                            Toast.makeText(getContext(), "Reached the target point!", Toast.LENGTH_LONG)
+                                    .show();
+                        }
                     }
                 }
                 LatLng nowLatLng = new LatLng(location.getLatitude(), location.getLongitude());
@@ -859,6 +864,7 @@ public class RunFragment extends Fragment implements OnMapReadyCallback,
                     if (task.isSuccessful()) {
                         if (task.getResult().isEmpty()) {
                             Log.d("TAG", "Getting empty documents: ");
+                            hasTask = false;
                             LatLng nowLatLng = new LatLng(lastKnownLocation.getLatitude(), lastKnownLocation.getLongitude());
                             map.animateCamera(CameraUpdateFactory.newLatLngZoom(
                                     nowLatLng, DEFAULT_ZOOM), 700, new GoogleMap.CancelableCallback() {
@@ -873,6 +879,7 @@ public class RunFragment extends Fragment implements OnMapReadyCallback,
                                 }
                             });
                         } else {
+                            hasTask = true;
                             for (QueryDocumentSnapshot document : task.getResult()) {
                                 Log.d("TAG", document.getId() + " => " + document.getData());
                                 Map<String, Object> data = document.getData();
