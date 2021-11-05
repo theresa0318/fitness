@@ -10,26 +10,39 @@
         android:id="@+id/profile_avatar"
         android:layout_width="128dp"
         android:layout_height="128dp"
-        android:src="@drawable/profile_icon"
+        android:onClick="onClick"
         android:layout_marginStart="72dp"
         android:layout_marginTop="64dp"
         android:layout_marginEnd="72dp"
         android:layout_marginBottom="32dp"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent"
-        />
+        app:layout_constraintTop_toTopOf="parent" />
+
+    <ImageView
+        android:id="@+id/profile_camera"
+        android:layout_width="48dp"
+        android:layout_height="48dp"
+        android:layout_marginBottom="0dp"
+        android:layout_marginStart="0dp"
+        android:onClick="onClick"
+        android:src="@drawable/camera_icon"
+        app:layout_constraintBottom_toBottomOf="@+id/profile_avatar"
+        app:layout_constraintStart_toStartOf="@+id/profile_avatar"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.663"
+         />
 
     <TextView
         android:id="@+id/text_profile_username"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginStart="64dp"
+        android:layout_marginStart="48dp"
         android:layout_marginTop="32dp"
-        android:layout_marginEnd="64dp"
+        android:layout_marginEnd="48dp"
         android:textAlignment="textStart"
         android:textSize="18sp"
-        android:text="User Name: 1234567@qq.com"
+        android:text="User Name: "
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/profile_avatar"
@@ -39,12 +52,12 @@
         android:id="@+id/text_profile_gender"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginStart="64dp"
+        android:layout_marginStart="48dp"
         android:layout_marginTop="16dp"
-        android:layout_marginEnd="64dp"
+        android:layout_marginEnd="48dp"
         android:textAlignment="textStart"
         android:textSize="18sp"
-        android:text="Gender: Female"
+        android:text="Gender: "
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/text_profile_username"
@@ -54,12 +67,12 @@
         android:id="@+id/text_profile_age"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginStart="64dp"
+        android:layout_marginStart="48dp"
         android:layout_marginTop="16dp"
-        android:layout_marginEnd="64dp"
+        android:layout_marginEnd="48dp"
         android:textAlignment="textStart"
         android:textSize="18sp"
-        android:text="Age: 20"
+        android:text="Age: "
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/text_profile_gender"
@@ -69,12 +82,12 @@
         android:id="@+id/text_profile_height"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginStart="64dp"
+        android:layout_marginStart="48dp"
         android:layout_marginTop="16dp"
-        android:layout_marginEnd="64dp"
+        android:layout_marginEnd="48dp"
         android:textAlignment="textStart"
         android:textSize="18sp"
-        android:text="Height: 163 cm"
+        android:text="Height: "
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/text_profile_age"
@@ -84,61 +97,82 @@
         android:id="@+id/text_profile_weight"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginStart="64dp"
+        android:layout_marginStart="48dp"
         android:layout_marginTop="16dp"
-        android:layout_marginEnd="64dp"
+        android:layout_marginEnd="48dp"
         android:textAlignment="textStart"
         android:textSize="18sp"
-        android:text="Weight: 50 kg"
+        android:text="Weight: "
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/text_profile_height"
         android:gravity="start" />
 
     <TextView
-        android:id="@+id/text_profile_todayRecord"
+        android:id="@+id/text_profile_division"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginStart="64dp"
+        android:layout_marginStart="48dp"
         android:layout_marginTop="16dp"
-        android:layout_marginEnd="64dp"
+        android:layout_marginEnd="96dp"
         android:textAlignment="textStart"
         android:textSize="18sp"
-        android:text="Today's Record: 1 km / 10 min"
+        android:text="Division: "
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/text_profile_weight"
-        android:gravity="start" />
+        android:gravity="start"
+        android:layout_marginLeft="64dp"
+        android:layout_marginRight="96dp" />
 
-    <TextView
-        android:id="@+id/text_profile_todayRank"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_marginStart="64dp"
+    <ImageButton
+        android:id="@+id/divisionInfo"
+        android:layout_width="30dp"
+        android:layout_height="30dp"
+        android:layout_marginStart="16dp"
+        android:layout_marginLeft="64dp"
         android:layout_marginTop="16dp"
-        android:layout_marginEnd="64dp"
-        android:textAlignment="textStart"
-        android:textSize="18sp"
-        android:text="Today's Rank: 10"
+        android:layout_marginEnd="80dp"
+        android:layout_marginRight="64dp"
+        android:background="@color/white"
+        android:onClick="showDivisionInfo"
+        android:scaleType="fitXY"
+        android:src="@drawable/exclamation_mark"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/text_profile_todayRecord"
-        android:gravity="start" />
+        app:layout_constraintStart_toEndOf="@+id/text_profile_division"
+        app:layout_constraintTop_toBottomOf="@+id/text_profile_weight"  />
 
-    <TextView
-        android:id="@+id/text_profile_todayCalorie"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_marginStart="64dp"
-        android:layout_marginTop="16dp"
-        android:layout_marginEnd="64dp"
-        android:textAlignment="textStart"
-        android:textSize="18sp"
-        android:text="Today's Energy Burned: 600 cal"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/text_profile_todayRank"
-        android:gravity="start" />
+
+
+<!--    <TextView-->
+<!--        android:id="@+id/text_profile_todayRank"-->
+<!--        android:layout_width="match_parent"-->
+<!--        android:layout_height="wrap_content"-->
+<!--        android:layout_marginStart="64dp"-->
+<!--        android:layout_marginTop="16dp"-->
+<!--        android:layout_marginEnd="64dp"-->
+<!--        android:textAlignment="textStart"-->
+<!--        android:textSize="18sp"-->
+<!--        android:text="Today's Rank: 10"-->
+<!--        app:layout_constraintEnd_toEndOf="parent"-->
+<!--        app:layout_constraintStart_toStartOf="parent"-->
+<!--        app:layout_constraintTop_toBottomOf="@+id/text_profile_todayRecord"-->
+<!--        android:gravity="start" />-->
+
+<!--    <TextView-->
+<!--        android:id="@+id/text_profile_todayCalorie"-->
+<!--        android:layout_width="match_parent"-->
+<!--        android:layout_height="wrap_content"-->
+<!--        android:layout_marginStart="64dp"-->
+<!--        android:layout_marginTop="16dp"-->
+<!--        android:layout_marginEnd="64dp"-->
+<!--        android:textAlignment="textStart"-->
+<!--        android:textSize="18sp"-->
+<!--        android:text="Today's Energy Burned: 600 cal"-->
+<!--        app:layout_constraintEnd_toEndOf="parent"-->
+<!--        app:layout_constraintStart_toStartOf="parent"-->
+<!--        app:layout_constraintTop_toBottomOf="@+id/text_profile_todayRank"-->
+<!--        android:gravity="start" />-->
 
 
 

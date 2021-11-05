@@ -12,12 +12,6 @@
         tools:layout="@layout/fragment_run" />
 
     <fragment
-        android:id="@+id/nav_community"
-        android:name="com.example.fitsoc.ui.community.CommunityFragment"
-        android:label="@string/menu_community"
-        tools:layout="@layout/fragment_community" />
-
-    <fragment
         android:id="@+id/nav_task"
         android:name="com.example.fitsoc.ui.task.TaskFragment"
         android:label="@string/menu_task"
@@ -28,6 +22,12 @@
         android:name="com.example.fitsoc.ui.history.HistoryFragment"
         android:label="@string/menu_history"
         tools:layout="@layout/fragment_history" />
+
+    <fragment
+        android:id="@+id/nav_rank"
+        android:name="com.example.fitsoc.ui.rank.RankFragment"
+        android:label="@string/menu_rank"
+        tools:layout="@layout/fragment_rank" />
 
     <fragment
         android:id="@+id/nav_profile"
@@ -41,4 +41,11 @@
         android:label="@string/menu_settings"
         tools:layout="@layout/fragment_settings" />
 
+    <fragment
+        android:id="@+id/nav_logout"
+        android:name="com.example.fitsoc.ui.logout.LogoutFragment"
+        android:label="Logout"
+        tools:layout="@layout/fragment_logout" />
+
 </navigation>
+

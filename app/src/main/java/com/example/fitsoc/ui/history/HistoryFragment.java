@@ -14,6 +14,7 @@ import androidx.fragment.app.Fragment;
 
 import com.example.fitsoc.R;
 import com.example.fitsoc.databinding.FragmentHistoryBinding;
+import com.example.fitsoc.ui.Global;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.Query;
 import com.google.firebase.firestore.QueryDocumentSnapshot;
@@ -39,8 +40,11 @@ public class HistoryFragment extends Fragment {
         // Inflate the layout for this fragment
         inflater.inflate(R.layout.fragment_history, container, false);
         binding = FragmentHistoryBinding.inflate(inflater, container, false);
-        userID = "abcdefg@gmail.com";
+        userID = ((Global)this.getActivity().getApplication()).getUserID();
         setListeners();
+        Calendar c = Calendar.getInstance();
+        String date = generateDateString(c.get(Calendar.YEAR),c.get(Calendar.MONTH),c.get(Calendar.DAY_OF_MONTH));
+        getDataFromDatabase(date);
         return binding.getRoot();
     }
 
@@ -62,18 +66,39 @@ public class HistoryFragment extends Fragment {
 
     @SuppressLint("SetTextI18n")
     private void updateUI(Map<String, Object> data, int rank) {
-        long distance = Math.round(((long) data.get("distance") / 1000));
-        String distanceString = "" + distance;
-        binding.textDistance.setText("Distance: " +
-                distanceString + " KM");
+        double distance = (long)data.get("distance") / 1.0;
+
+        if(distance < 1000){
+            String distanceString = "" + (int)distance;
+            binding.textDistance.setText("Distance: " +
+                    distanceString + " M");
+        }else{
+            binding.textDistance.setText("Distance: " +
+                    String.format("%.2f", distance / 1000) + " KM");
+        }
         long duration = Math.round((long) data.get("duration") / 1000);
-        String durationString = "" + duration;
-        binding.textTime.setText("Time: " + durationString + " min");
+        String durationString;
+        if (duration <= 60) {
+            durationString = "" + duration;
+            binding.textTime.setText("Time: " + durationString + " Second");
+        } else {
+            duration = duration / 60;
+            durationString = "" + duration;
+            binding.textTime.setText("Time: " + durationString + " Min");
+        }
+
+
         binding.textRank.setText("Rank: " + rank);
     }
 
+    private void updateUIForNoFit() {
+        binding.textDistance.setText("Distance: 0 M");
+        binding.textRank.setText("Rank: Unknown");
+        binding.textTime.setText("Time: 0 Min");
+    }
 
-    private void getDataFromDatabase(String date) {
+
+    public void getDataFromDatabase(String date) {
         FirebaseFirestore db = FirebaseFirestore.getInstance();
         db.collection("events")
                 .whereEqualTo("date", date)
@@ -83,15 +108,19 @@ public class HistoryFragment extends Fragment {
                     if (task.isSuccessful()) {
                         if (task.getResult().isEmpty()) {
                             Log.d(TAG, "No getting documents: ", task.getException());
+                            updateUIForNoFit();
                         } else {
                             int rank = 0;
+                            boolean hasRecord = false;
                             for (QueryDocumentSnapshot document : task.getResult()) {
                                 rank++;
                                 Log.d(TAG, document.getId() + " => " + document.getData());
                                 if (document.getData().get("userID").equals(userID)) {
                                     updateUI(document.getData(), rank);
+                                    hasRecord = true;
                                 }
                             }
+                            if (!hasRecord) updateUIForNoFit();
                         }
                     } else {
                         Log.d(TAG, "Error getting documents: ", task.getException());

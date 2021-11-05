@@ -17,23 +17,28 @@
     sothree:umanoScrollableView="@+id/underView"
     tools:context=".ui.run.RunFragment">
 
-    <!-- MAIN CONTENT -->
-    <FrameLayout
+    <!-- Main content of the Google Map -->
+    <androidx.coordinatorlayout.widget.CoordinatorLayout
+        android:id="@+id/coordinator_layout"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:orientation="vertical">
+
         <androidx.appcompat.widget.Toolbar
             android:id="@+id/main_toolbar"
+            android:layout_width="match_parent"
             android:layout_height="?attr/actionBarSize"
             android:background="?attr/colorPrimary"
-            sothree:theme="@style/ActionBar"
-            android:layout_width="match_parent"/>
-        <com.google.android.gms.maps.MapView android:id="@+id/mapview"
-            android:layout_width="fill_parent"
-            android:layout_height="fill_parent" />
-    </FrameLayout>
+            sothree:theme="@style/ActionBar" />
 
-    <!-- SLIDING LAYOUT -->
+        <com.google.android.gms.maps.MapView
+            android:id="@+id/mapview"
+            android:layout_width="fill_parent"
+            android:layout_height="match_parent" />
+
+    </androidx.coordinatorlayout.widget.CoordinatorLayout>
+
+    <!-- Timer & the share page -->
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="match_parent"
@@ -48,19 +53,20 @@
             android:layout_height="68dp"
             android:orientation="horizontal">
 
+            <!-- Timer  -->
             <TextView
                 android:id="@+id/timeCalculator"
                 android:layout_width="0dp"
                 android:layout_height="match_parent"
                 android:layout_weight="1"
-                android:textSize="24sp"
+                android:textSize="20sp"
                 android:gravity="center_vertical"
-                android:paddingLeft="20dp"
+                android:paddingLeft="15dp"
                 android:text="Time: 00:00:00"/>
 
             <ImageButton
                 android:id="@+id/timeStart"
-                android:layout_width="70dp"
+                android:layout_width="60dp"
                 android:layout_height="match_parent"
                 android:gravity="center_vertical|right"
                 android:src="@drawable/start"
@@ -69,7 +75,7 @@
 
             <ImageButton
                 android:id="@+id/timePause"
-                android:layout_width="70dp"
+                android:layout_width="60dp"
                 android:layout_height="match_parent"
                 android:gravity="center_vertical|right"
                 android:src="@drawable/pause"
@@ -78,7 +84,7 @@
 
             <ImageButton
                 android:id="@+id/timeStop"
-                android:layout_width="70dp"
+                android:layout_width="60dp"
                 android:layout_height="match_parent"
                 android:gravity="center_vertical|right"
                 android:src="@drawable/stop"
@@ -87,6 +93,7 @@
 
         </LinearLayout>
 
+        <!-- Result & Share Page  -->
         <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="match_parent"
@@ -101,45 +108,50 @@
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
                 android:layout_marginTop="50dp"
-                android:textSize="24sp"
-                android:paddingLeft="20dp"
-                android:text="Start: Carlton (或者经纬度)"/>
+                android:textSize="20sp"
+                android:paddingLeft="15dp"
+                android:paddingRight="15dp"
+                android:text="Start: Unknown"/>
 
             <TextView
-                android:id="@+id/desitination"
+                android:id="@+id/destination"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
-                android:textSize="24sp"
-                android:paddingLeft="20dp"
-                android:text="Destination: CBD (或者经纬度)"/>
+                android:textSize="20sp"
+                android:paddingLeft="15dp"
+                android:paddingRight="15dp"
+                android:text="Destination: Unknown"/>
 
             <TextView
                 android:id="@+id/length"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
-                android:textSize="24sp"
-                android:paddingLeft="20dp"
-                android:text="Distance: 1 km"/>
+                android:textSize="20sp"
+                android:paddingLeft="15dp"
+                android:paddingRight="15dp"
+                android:text="Distance: 0 km"/>
 
             <TextView
                 android:id="@+id/rank"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
-                android:textSize="24sp"
-                android:paddingLeft="20dp"
-                android:text="Current Rank: 6"/>
+                android:textSize="20sp"
+                android:paddingLeft="15dp"
+                android:paddingRight="15dp"
+                android:text="Current Rank: Unknown"/>
 
             <TextView
                 android:id="@+id/cong"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
-                android:textSize="24sp"
-                android:paddingLeft="20dp"
-                android:text="Congradulations, Username! You did a good job today!"
+                android:textSize="20sp"
+                android:paddingLeft="15dp"
+                android:paddingRight="15dp"
+                android:text="Congradulations! You did a good job today!"
                 android:textStyle="italic"
                 android:textColor="@color/purple_700"/>
 
@@ -166,17 +178,18 @@
                     android:layout_width="0dp"
                     android:layout_height="match_parent"
                     android:layout_weight="1"
-                    android:textSize="24sp"
+                    android:textSize="20sp"
                     android:gravity="center_vertical|right"
-                    android:paddingLeft="20dp"
+                    android:paddingLeft="10dp"
                     android:paddingRight="20dp"
+                    android:paddingBottom="20dp"
                     android:text="Share with your friends:"/>
 
                 <ImageButton
                     android:id="@+id/share"
                     android:layout_width="50dp"
                     android:layout_height="50dp"
-                    android:layout_marginRight="10dp"
+                    android:layout_marginRight="15dp"
                     android:gravity="center_vertical|right"
                     android:src="@drawable/share_icon"
                     android:background="@color/white"
