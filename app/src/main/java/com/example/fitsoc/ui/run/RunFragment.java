@@ -542,7 +542,7 @@ public class RunFragment extends Fragment implements OnMapReadyCallback,
         double avgSpeedDouble;
         if (avgSpeed.isPresent()) avgSpeedDouble = avgSpeed.getAsDouble();
         else avgSpeedDouble = 0;
-        Toast.makeText(requireContext(), "Speed: " + avgSpeedDouble, Toast.LENGTH_SHORT).show();
+//        Toast.makeText(requireContext(), "Speed: " + avgSpeedDouble, Toast.LENGTH_SHORT).show();
         if (hasTask) {
             if (distanceTask.isAccepted && !distanceTask.isCompleted) {
                 if (totalDistance >= distanceTask.value) {
@@ -582,11 +582,11 @@ public class RunFragment extends Fragment implements OnMapReadyCallback,
                 } else {
                     Log.d("firebase", String.valueOf(task.getResult().getValue()));
                     Map<String, Object> map = (Map<String, Object>) task.getResult().getValue();
-                    long originalPoints = (long) map.get("points");
+                    long originalPoints = (long) map.get("bonusPoint");
                     long newPoints = originalPoints + Global.getFitPoint();
 
                     Map<String, Object> userUpdate = new HashMap<>();
-                    userUpdate.put("points", newPoints);
+                    userUpdate.put("bonusPoint", newPoints);
                     mDatabase.child("users").child(userID.replace(".", ",")).updateChildren(userUpdate, (databaseError, databaseReference) -> {
                         if (databaseError != null) {
                             Log.w(TAG, "points error");
