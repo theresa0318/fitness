@@ -290,18 +290,20 @@ public class ProfileFragment extends Fragment {
         super.onActivityResult(requestCode, resultCode, data);
         if (requestCode == GALLERY_REQUEST_CODE && resultCode == RESULT_OK && data != null && data.getData() != null){
             imageUri = data.getData();
-            cropGalleryPhoto(imageUri, 1, 1, head_output_x, head_output_y);
+//            cropGalleryPhoto(imageUri, 1, 1, head_output_x, head_output_y);
+            profileAvatar.setImageURI(imageUri);
+            uploadGalleryPicture();
         }
         if (requestCode == CAMERA_REQUEST_CODE && resultCode == RESULT_OK && data != null && data.getExtras() != null && data.getExtras().get("data") != null) {
             cameraImg = (Bitmap) data.getExtras().get("data");
             cameraUri = Uri.parse(MediaStore.Images.Media.insertImage(requireContext().getContentResolver(), cameraImg, null,null));
             cropCameraPhoto(cameraUri, 1, 1, head_output_x, head_output_y);
         }
-        if (requestCode == CODE_RESULT_REQUEST1 && resultCode == RESULT_OK && data != null && data.getData() != null) {
-            imageUri = data.getData();
-            profileAvatar.setImageURI(imageUri);
-            uploadGalleryPicture();
-        }
+//        if (requestCode == CODE_RESULT_REQUEST1 && resultCode == RESULT_OK && data != null && data.getData() != null) {
+//            imageUri = data.getData();
+//            profileAvatar.setImageURI(imageUri);
+//            uploadGalleryPicture();
+//        }
         if (requestCode == CODE_RESULT_REQUEST2 && resultCode == RESULT_OK && data != null && data.getExtras() != null && data.getExtras().get("data") != null) {
             cameraImg = (Bitmap) data.getExtras().get("data");
             cameraUri = Uri.parse(MediaStore.Images.Media.insertImage(requireContext().getContentResolver(), cameraImg, null,null));
