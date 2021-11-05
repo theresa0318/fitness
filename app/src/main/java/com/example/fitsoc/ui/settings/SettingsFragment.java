@@ -189,6 +189,8 @@ public class SettingsFragment extends Fragment implements View.OnClickListener {
         if (!String.valueOf(String.valueOf(weightText.getText())).equals("")) {
             userUpdates.put("weight", Integer.parseInt(String.valueOf(weightText.getText())));
         }
+        // Test bonusPoint : OK
+//        userUpdates.put("bonusPoint", Integer.parseInt(String.valueOf(300)));
 
         userRef.updateChildren(userUpdates,new DatabaseReference.CompletionListener() {
             @Override
