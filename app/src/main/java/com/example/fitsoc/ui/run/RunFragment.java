@@ -563,7 +563,7 @@ public class RunFragment extends Fragment implements OnMapReadyCallback,
         }
         RunningData data = new RunningData(userID);
         data.setDistance(totalDistance);
-        data.setSpeedAVG((long) avgSpeed.getAsDouble());
+        data.setSpeedAVG((long) avgSpeedDouble);
         data.setStartTime(new Timestamp(startTime));
         data.setEndTime(new Timestamp(lastStopTime));
         data.setTotalTime(totalTime);
