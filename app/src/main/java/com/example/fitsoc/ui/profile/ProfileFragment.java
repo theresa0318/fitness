@@ -75,7 +75,7 @@ import java.util.UUID;
 
 public class ProfileFragment extends Fragment {
 
-    private TextView profileUsername, profileGender, profileAge, profileHeight, profileWeight;
+    private TextView profileUsername, profileGender, profileAge, profileHeight, profileWeight, profileDivision;
     private ImageView profileAvatar;
     private ImageView camera;
     private ImageButton divisionInfo;
@@ -93,6 +93,7 @@ public class ProfileFragment extends Fragment {
     private int age;
     private int height;
     private int weight;
+    private int bonusPoint;
     private String imageUrl;
     private static final String DEFAULT_IMAGE_URL="@drawable/profile_icon";
     public static final int CAMERA_PERM_CODE = 101;
@@ -164,6 +165,7 @@ public class ProfileFragment extends Fragment {
         profileHeight = profileView.findViewById(R.id.text_profile_height);
         profileWeight = profileView.findViewById(R.id.text_profile_weight);
         profileAvatar = profileView.findViewById(R.id.profile_avatar);
+        profileDivision = profileView.findViewById(R.id.text_profile_division);
 
         profileAvatar.setOnClickListener(new View.OnClickListener(){
             @Override
@@ -196,6 +198,7 @@ public class ProfileFragment extends Fragment {
                     height = userProfile.getHeight();
                     weight = userProfile.getWeight();
                     imageUrl = userProfile.getImageUrl();
+                    bonusPoint = userProfile.getBonusPoint();
 
 
                     profileUsername.setText("Username: " + username);
@@ -203,6 +206,15 @@ public class ProfileFragment extends Fragment {
                     profileAge.setText("Age: " + age);
                     profileHeight.setText("Height: " + height + " cm");
                     profileWeight.setText("Weight: " + weight + " kg");
+                    if (bonusPoint < 100) {
+                        profileDivision.setText("Division: Beginner");
+                    } else if (bonusPoint >= 100 && bonusPoint < 200) {
+                        profileDivision.setText("Division: Bronze");
+                    } else if (bonusPoint >= 200 && bonusPoint < 300) {
+                        profileDivision.setText("Division: Silver");
+                    } else {
+                        profileDivision.setText("Division: Gold");
+                    }
                     //int imageResource = getResources().getIdentifier(imageUrl, "drawable", getContext().getPackageName());
                     //Drawable res = getResources().getDrawable(imageResource);
                     //profileAvatar.setImageDrawable(res);
@@ -495,7 +507,7 @@ public class ProfileFragment extends Fragment {
 
     public void showDivisionInfo () {
         AlertDialog.Builder builder = new AlertDialog.Builder(getActivity());
-        builder.setMessage("Beginner: < 10 points" + "\n" + "Bronze: >= 10 and < 20 points" + "\n" + "Sliver: >= 20 and < 30 points" + "\n" + "Gold: >= 40 points")
+        builder.setMessage("Beginner: < 100 points" + "\n" + "Bronze: >= 100 and < 200 points" + "\n" + "Sliver: >= 200 and < 300 points" + "\n" + "Gold: >= 400 points")
                 .setTitle("Division Information");
         builder.setPositiveButton("Get it!", new DialogInterface.OnClickListener() {
             @Override
