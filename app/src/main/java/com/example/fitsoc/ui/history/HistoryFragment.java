@@ -77,8 +77,17 @@ public class HistoryFragment extends Fragment {
                     String.format("%.2f", distance / 1000) + " KM");
         }
         long duration = Math.round((long) data.get("duration") / 1000);
-        String durationString = "" + duration;
-        binding.textTime.setText("Time: " + durationString + " Min");
+        String durationString;
+        if (duration <= 60) {
+            durationString = "" + duration;
+            binding.textTime.setText("Time: " + durationString + " Second");
+        } else {
+            duration = duration / 60;
+            durationString = "" + duration;
+            binding.textTime.setText("Time: " + durationString + " Min");
+        }
+
+
         binding.textRank.setText("Rank: " + rank);
     }
 
