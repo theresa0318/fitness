@@ -507,7 +507,7 @@ public class ProfileFragment extends Fragment {
 
     public void showDivisionInfo () {
         AlertDialog.Builder builder = new AlertDialog.Builder(getActivity());
-        builder.setMessage("Beginner: < 100 points" + "\n" + "Bronze: >= 100 and < 200 points" + "\n" + "Sliver: >= 200 and < 300 points" + "\n" + "Gold: >= 400 points")
+        builder.setMessage("Beginner: < 100 points" + "\n" + "Bronze: >= 100 and < 200 points" + "\n" + "Sliver: >= 200 and < 300 points" + "\n" + "Gold: >= 300 points")
                 .setTitle("Division Information");
         builder.setPositiveButton("Get it!", new DialogInterface.OnClickListener() {
             @Override
