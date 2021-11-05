@@ -37,7 +37,7 @@
                     android:textStyle="bold" />
 
                 <TextView
-                    android:id="@+id/hardTask"
+                    android:id="@+id/simpleTask"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:padding="5dp"
@@ -45,7 +45,7 @@
                     android:textSize="18sp"/>
 
                 <TextView
-                    android:id="@+id/hardTaskStatus"
+                    android:id="@+id/simpleTaskStatus"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:padding="5dp"
@@ -135,7 +135,7 @@
                     android:textStyle="bold" />
 
                 <TextView
-                    android:id="@+id/simpleTask"
+                    android:id="@+id/hardTask"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:padding="5dp"
@@ -143,7 +143,7 @@
                     android:textSize="18sp"/>
 
                 <TextView
-                    android:id="@+id/simpleTaskStatus"
+                    android:id="@+id/hardTaskStatus"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:padding="5dp"

@@ -168,15 +168,15 @@ public class TaskFragment extends Fragment {
             }
             Global.setDailyTask(dailyTask);
             dailyTask.writeToDatabase();
-
+            acceptBtn.setEnabled(false);
             Toast.makeText(getActivity(), "Your plan has been created!", Toast.LENGTH_LONG).show();
         });
 
         taskList.setOnClickListener(v -> {
             showTaskList ();
 
-            Toast.makeText(requireContext(), "Task Accepted!", Toast.LENGTH_SHORT).show();
-            acceptBtn.setEnabled(false);
+//            Toast.makeText(requireContext(), "Task Accepted!", Toast.LENGTH_SHORT).show();
+//            acceptBtn.setEnabled(false);
 
         });
 
@@ -226,8 +226,40 @@ public class TaskFragment extends Fragment {
     }
 
     public void showTaskList () {
+        boolean hasPlaned = false;
+        boolean hasCompleted = false;
+        String planString = "";
+        String completedTasks = "";
+        if (dailyTask.getSimpleTask().isAccepted && !dailyTask.getSimpleTask().isCompleted){
+            planString += "Easy";
+            hasPlaned = true;
+        }
+        if (dailyTask.getMidTask().isAccepted && !dailyTask.getMidTask().isCompleted) {
+            planString += " Medium";
+            hasPlaned = true;
+        }
+        if (dailyTask.getHardTask().isAccepted && !dailyTask.getHardTask().isCompleted) {
+            planString += " Hard";
+            hasPlaned = true;
+        }
+        if (!hasPlaned) planString = "None";
+
+        if (dailyTask.getSimpleTask().isAccepted && dailyTask.getSimpleTask().isCompleted){
+            completedTasks += "Easy";
+            hasCompleted = true;
+        }
+        if (dailyTask.getMidTask().isAccepted && dailyTask.getMidTask().isCompleted) {
+            completedTasks += " Medium";
+            hasCompleted = true;
+        }
+        if (dailyTask.getHardTask().isAccepted && dailyTask.getHardTask().isCompleted) {
+            completedTasks += " Hard";
+            hasCompleted = true;
+        }
+        if (!hasCompleted) completedTasks = "None";
+
         android.app.AlertDialog.Builder builder1 = new android.app.AlertDialog.Builder(getActivity());
-        builder1.setMessage("Plan: " + "Easy, Medium" + "\n" + "Completed Tasks: " + "Easy" + "\n" + "Bonus Obtained: " + "1" )
+        builder1.setMessage("Plan: " + planString + "\n" + "Completed Tasks: " + completedTasks + "\n" + "Bonus Obtained: " + dailyTask.getBonus())
                 .setTitle("Division Information");
         builder1.setPositiveButton("Get it!", new DialogInterface.OnClickListener() {
             @Override

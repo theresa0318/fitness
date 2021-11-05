@@ -71,7 +71,7 @@ public class DailyTask {
 
     public FitTask getHardTask() {
         for (FitTask task : todayTasks) {
-            if(task.level < 4) return task;
+            if(task.level > 7) return task;
         }
         return null;
     }
@@ -84,7 +84,7 @@ public class DailyTask {
     }
     public FitTask getSimpleTask() {
         for (FitTask task : todayTasks) {
-            if(task.level >7 ) return task;
+            if(task.level < 4 ) return task;
         }
         return null;
     }
@@ -94,6 +94,20 @@ public class DailyTask {
             if (task.isAccepted) return true;
         }
         return false;
+    }
+
+    public int getBonus() {
+        int bonus = 0;
+        if (getSimpleTask().isAccepted && getSimpleTask().isCompleted) {
+            bonus += 1;
+        }
+        if (getMidTask().isAccepted && getMidTask().isCompleted) {
+            bonus += 3;
+        }
+        if (getHardTask().isAccepted && getHardTask().isCompleted) {
+            bonus +=5;
+        }
+        return bonus;
     }
 
     private void updateTasks(FirebaseFirestore db, QueryDocumentSnapshot document) {
